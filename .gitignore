@@ -1,0 +1,23 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Mac
+.DS_Store
+
+# Training outputs
+runs/
+dataset_raw/
+dataset_selected/
+dataset_yolo/
+dataset_yolo.zip
+
+# Models
+*.pt
+
+# Images used for testing
+test_images/
+
+# VSCode
+.vscode/

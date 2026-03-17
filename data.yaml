@@ -1,0 +1,25 @@
+path: /Users/henrychijioke/myPCOS_model_Training/dataset_yolo
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: Rice
+  1: Fried rice
+  2: Pizza toast
+  3: Spaghetti
+  4: Hamburger
+  5: Pizza
+  6: Sushi
+  7: Fried chicken
+  8: Sandwiches
+  9: French fries
+  10: Green Salad
+  11: Roll bread
+  12: Omelet
+  13: Beef steak
+  14: Hot dogs
+  15: Sausage
+  16: Croissant
+  17: Toast
+  18: Boiled fish
