@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 export interface User {
   id: number;
   email: string;
+  first_name?: string;
   is_active: boolean;
   is_verified: boolean;
 }

@@ -11,6 +11,7 @@ class UserCreate(BaseModel):
 class UserRead(BaseModel):
     id: int
     email: EmailStr
+    first_name: str | None = None
     is_active: bool
     is_verified: bool
 
