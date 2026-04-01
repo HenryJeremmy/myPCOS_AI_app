@@ -1,220 +1,3 @@
-// 'use client';
-
-// import { useState } from 'react';
-// import { useAuth } from '@/lib/auth';
-// import { useRouter } from 'next/navigation';
-
-// interface AuthFormProps {
-//   mode: 'login' | 'signup';
-//   onSuccess?: () => void;
-// }
-
-// export function AuthForm({ mode, onSuccess }: AuthFormProps) {
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const [confirmPassword, setConfirmPassword] = useState('');
-//   const [firstName, setFirstName] = useState('');
-//   const [lastName, setLastName] = useState('');
-//   const [error, setError] = useState('');
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-//   const router = useRouter();
-//   const { login, signup } = useAuth();
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     setError('');
-
-//     if (mode === 'signup' && password !== confirmPassword) {
-//       setError('Passwords do not match');
-//       return;
-//     }
-
-//     setIsLoading(true);
-
-//     try {
-//       if (mode === 'login') {
-//         await login(email, password);
-//         onSuccess?.();
-//       } else {
-//         const result = await signup(email, password, firstName, lastName);
-//         router.push(`/verify-email?email=${encodeURIComponent(result.email)}`);
-//       }
-//     } catch (err) {
-//       setError(err instanceof Error ? err.message : 'An error occurred');
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="w-full max-w-md">
-//       <div className="mb-8">
-//         <h2 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent text-center">
-//           {mode === 'login' ? 'Welcome Back!' : 'Join MyPCOS Today!'}
-//         </h2>
-//         <p className="mt-2 text-center text-sm text-slate-600">
-//           {mode === 'login'
-//             ? 'Sign in to your account'
-//             : 'Create your free account'}
-//         </p>
-//       </div>
-
-//       <form className="space-y-5" onSubmit={handleSubmit}>
-//         {/* Signup: First and Last Name */}
-//         {mode === 'signup' && (
-//           <div className="grid grid-cols-2 gap-4">
-//             <div>
-//               <label htmlFor="firstName" className="block text-sm font-medium text-slate-700 mb-2">
-//                 First Name
-//               </label>
-//               <input
-//                 id="firstName"
-//                 name="firstName"
-//                 type="text"
-//                 placeholder="Jane"
-//                 required
-//                 className="w-full px-4 py-2.5 rounded-xl border border-pink-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition"
-//                 value={firstName}
-//                 onChange={(e) => setFirstName(e.target.value)}
-//               />
-//             </div>
-//             <div>
-//               <label htmlFor="lastName" className="block text-sm font-medium text-slate-700 mb-2">
-//                 Last Name
-//               </label>
-//               <input
-//                 id="lastName"
-//                 name="lastName"
-//                 type="text"
-//                 placeholder="Doe"
-//                 required
-//                 className="w-full px-4 py-2.5 rounded-xl border border-pink-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition"
-//                 value={lastName}
-//                 onChange={(e) => setLastName(e.target.value)}
-//               />
-//             </div>
-//           </div>
-//         )}
-
-//         {/* Email */}
-//         <div>
-//           <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-//             Email Address
-//           </label>
-//           <input
-//             id="email"
-//             name="email"
-//             type="email"
-//             autoComplete="email"
-//             placeholder="you@example.com"
-//             required
-//             className="w-full px-4 py-2.5 rounded-xl border border-pink-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//           />
-//         </div>
-
-//         {/* Password */}
-//         <div>
-//           <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-//             Password
-//           </label>
-//           <div className="relative">
-//             <input
-//               id="password"
-//               name="password"
-//               type={showPassword ? 'text' : 'password'}
-//               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-//               placeholder="••••••••"
-//               required
-//               className="w-full px-4 py-2.5 rounded-xl border border-pink-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition pr-10"
-//               value={password}
-//               onChange={(e) => setPassword(e.target.value)}
-//             />
-//             <button
-//               type="button"
-//               onClick={() => setShowPassword(!showPassword)}
-//               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition"
-//             >
-//               {showPassword ? (
-//                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0m7.6 0A10.05 10.05 0 1012 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 4.803m-5.596 3.856" />
-//                 </svg>
-//               ) : (
-//                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-//                 </svg>
-//               )}
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* Signup: Confirm Password */}
-//         {mode === 'signup' && (
-//           <div>
-//             <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
-//               Confirm Password
-//             </label>
-//             <div className="relative">
-//               <input
-//                 id="confirmPassword"
-//                 name="confirmPassword"
-//                 type={showConfirmPassword ? 'text' : 'password'}
-//                 placeholder="••••••••"
-//                 required
-//                 className="w-full px-4 py-2.5 rounded-xl border border-pink-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition pr-10"
-//                 value={confirmPassword}
-//                 onChange={(e) => setConfirmPassword(e.target.value)}
-//               />
-//               <button
-//                 type="button"
-//                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-//                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition"
-//               >
-//                 {showConfirmPassword ? (
-//                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0m7.6 0A10.05 10.05 0 1012 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 4.803m-5.596 3.856" />
-//                   </svg>
-//                 ) : (
-//                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-//                   </svg>
-//                 )}
-//               </button>
-//             </div>
-//           </div>
-//         )}
-
-//         {/* Error Message */}
-//         {error && (
-//           <div className="rounded-lg bg-rose-50 border border-rose-200 p-4">
-//             <p className="text-sm text-rose-700 font-medium">{error}</p>
-//           </div>
-//         )}
-
-//         {/* Submit Button */}
-//         <button
-//           type="submit"
-//           disabled={isLoading}
-//           className="w-full mt-6 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-rose-500 text-white font-semibold hover:from-purple-600 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-//         >
-//           {isLoading
-//             ? 'Processing...'
-//             : mode === 'login'
-//               ? 'Sign In'
-//               : 'Create Account'}
-//         </button>
-//       </form>
-//     </div>
-//   );
-// }
-
-
-
 'use client';
 
 import { useState } from 'react';
@@ -256,6 +39,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
     try {
       if (mode === 'login') {
         await login(email, password);
+        router.push('/dashboard');
         onSuccess?.();
       } else {
         const result = await signup(email, password, firstName, lastName);
@@ -310,8 +94,9 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
               {mode === 'signup' && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-violet-700">First Name</label>
+                    <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-violet-700">First Name</label>
                     <input
+                      id="firstName"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
@@ -321,8 +106,9 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-violet-700">Last Name</label>
+                    <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-violet-700">Last Name</label>
                     <input
+                      id="lastName"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
@@ -335,21 +121,23 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
               )}
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-violet-700">Email Address</label>
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-violet-700">Email Address</label>
                 <input
+                  id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   type="email"
-                  placeholder="you@domain.com"
+                  placeholder=""
                   className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-violet-700">Password</label>
+                <label htmlFor="password" className="mb-2 block text-sm font-medium text-violet-700">Password</label>
                 <div className="relative">
                   <input
+                    id="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -370,9 +158,10 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
 
               {mode === 'signup' && (
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-violet-700">Confirm Password</label>
+                  <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-violet-700">Confirm Password</label>
                   <div className="relative">
                     <input
+                      id="confirmPassword"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
