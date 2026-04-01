@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
 
 from app.api.auth import get_db, get_current_user
 from app.models.user import User
@@ -71,3 +73,41 @@ def create_lifestyle_entry(
     db.commit()
     db.refresh(entry)
     return entry
+
+@router.get("/meals", response_model=list[MealEntryRead])
+def list_meal_entries(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return (
+        db.query(MealEntry)
+        .filter(MealEntry.user_id == current_user.id)
+        .order_by(MealEntry.created_at.desc())
+        .all()
+    )
+
+
+@router.get("/symptoms", response_model=list[SymptomEntryRead])
+def list_symptom_entries(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return (
+        db.query(SymptomEntry)
+        .filter(SymptomEntry.user_id == current_user.id)
+        .order_by(SymptomEntry.created_at.desc())
+        .all()
+    )
+
+
+@router.get("/lifestyle", response_model=list[LifestyleEntryRead])
+def list_lifestyle_entries(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return (
+        db.query(LifestyleEntry)
+        .filter(LifestyleEntry.user_id == current_user.id)
+        .order_by(LifestyleEntry.created_at.desc())
+        .all()
+    )
