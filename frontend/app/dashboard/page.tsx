@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { ProtectedRoute } from "@/components/protected-route";
 
@@ -11,6 +11,34 @@ function getGreeting() {
   if (hour < 16) return "Good afternoon";
   return "Good evening";
 }
+type MealHistoryItem = {
+  id: number;
+  meal_type: string;
+  foods_text: string;
+  notes: string;
+  created_at: string;
+};
+
+type SymptomHistoryItem = {
+  id: number;
+  fatigue: boolean;
+  cravings: boolean;
+  bloating: boolean;
+  mood_change: boolean;
+  notes: string;
+  created_at: string;
+};
+
+type LifestyleHistoryItem = {
+  id: number;
+  sleep_hours: number;
+  exercise_minutes: number;
+  water_litres: number;
+  stress_level: string;
+  mood: string;
+  activity_notes: string;
+  created_at: string;
+};
 
 const sidebarItems = [
   "Overview",
@@ -27,33 +55,88 @@ const dashboardCards = [
     title: "Upload Meal Image",
     description: "Support AI-assisted meal capture and faster food logging.",
   },
-  {
-    title: "Symptom Logging",
-    description: "Track fatigue, cravings, bloating, and mood-related changes.",
-  },
-  {
-    title: "Lifestyle Logging",
-    description: "Record sleep, water, stress, exercise, and daily activity.",
-  },
+
   {
     title: "Insights",
     description: "View repeated behavioural patterns and feedback over time.",
-  },
-  {
-    title: "Meal History",
-    description: "Review previous food logs and timestamped meal activity.",
   },
 ];
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const [mealHistory, setMealHistory] = useState<MealHistoryItem[]>([]);
   const [mealType, setMealType] = useState("");
   const [fatigue, setFatigue] = useState("Yes");
   const [cravings, setCravings] = useState("No");
   const [sleepHours, setSleepHours] = useState("");
   const [exerciseMinutes, setExerciseMinutes] = useState("");
-
   const [foodsText, setFoodsText] = useState("");
+  const [symptomHistory, setSymptomHistory] = useState<SymptomHistoryItem[]>([],);
+  const [lifestyleHistory, setLifestyleHistory] = useState<LifestyleHistoryItem[]>([]);
+
+  useEffect(() => {
+    async function loadMealHistory() {
+      const token = Cookies.get("access_token");
+      if (!token) return;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/meals`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      setMealHistory(Array.isArray(data) ? data : []);
+    }
+
+    loadMealHistory();
+
+    async function loadSymptomHistory() {
+      const token = Cookies.get("access_token");
+      if (!token) return;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/symptoms`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      setSymptomHistory(Array.isArray(data) ? data : []);
+    }
+
+    loadSymptomHistory();
+
+    async function loadLifestyleHistory() {
+      const token = Cookies.get("access_token");
+      if (!token) return;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/lifestyle`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      setLifestyleHistory(Array.isArray(data) ? data : []);
+    }
+    loadLifestyleHistory();
+  }, []);
 
   return (
     <ProtectedRoute>
@@ -302,6 +385,92 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 ))}
+
+                <div className="rounded-[24px] bg-white/85 p-5 shadow-sm">
+                  <h2 className="text-lg font-bold text-[#592b5a]">
+                    Meal History
+                  </h2>
+
+                  <div className="mt-3 space-y-3">
+                    {mealHistory.length === 0 ? (
+                      <p className="text-sm leading-6 text-[#7e6880]">
+                        Review previous food logs and timestamped meal activity.
+                      </p>
+                    ) : (
+                      mealHistory.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl bg-[#f8eef6] p-3"
+                        >
+                          <p className="text-sm font-semibold uppercase tracking-wide text-[#7a4a78]">
+                            {entry.meal_type}
+                          </p>
+                          <p className="mt-1 text-sm text-[#5f4a60]">
+                            {entry.foods_text}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] bg-white/85 p-5 shadow-sm">
+                  <h2 className="text-lg font-bold text-[#592b5a]">
+                    Symptom Logging
+                  </h2>
+
+                  <div className="mt-3 space-y-3">
+                    {symptomHistory.length === 0 ? (
+                      <p className="text-sm leading-6 text-[#7e6880]">
+                        Track fatigue, cravings, bloating, and mood-related
+                        changes.
+                      </p>
+                    ) : (
+                      symptomHistory.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl bg-[#f8eef6] p-3"
+                        >
+                          <p className="text-sm font-semibold text-[#7a4a78]">
+                            {entry.bloating ? "Bloating" : "Symptom entry"}
+                          </p>
+                          <p className="mt-1 text-sm text-[#5f4a60]">
+                            {entry.notes}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] bg-white/85 p-5 shadow-sm">
+                  <h2 className="text-lg font-bold text-[#592b5a]">
+                    Lifestyle Logging
+                  </h2>
+
+                  <div className="mt-3 space-y-3">
+                    {lifestyleHistory.length === 0 ? (
+                      <p className="text-sm leading-6 text-[#7e6880]">
+                        Record sleep, water, stress, exercise, and daily
+                        activity.
+                      </p>
+                    ) : (
+                      lifestyleHistory.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl bg-[#f8eef6] p-3"
+                        >
+                          <p className="text-sm font-semibold text-[#7a4a78]">
+                            {entry.sleep_hours} hours sleep
+                          </p>
+                          <p className="mt-1 text-sm text-[#5f4a60]">
+                            {entry.activity_notes}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </main>
           </div>
