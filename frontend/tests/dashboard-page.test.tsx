@@ -74,22 +74,28 @@ describe("dashboard page", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows a personalised greeting using first_name", () => {
+  it("shows a personalised greeting using first_name", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(
       screen.getByText(/good (morning|afternoon|evening), henry/i),
     ).toBeInTheDocument();
   });
 
-  it("shows the executive sidebar navigation and logout action", () => {
+  it("shows the executive sidebar navigation and logout action", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(screen.getByText("Overview")).toBeInTheDocument();
     expect(screen.getByText("Meals")).toBeInTheDocument();
@@ -101,11 +107,14 @@ describe("dashboard page", () => {
     expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument();
   });
 
-  it("shows the main dashboard action cards", () => {
+  it("shows the main dashboard action cards", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(screen.getByText("Upload Meal Image")).toBeInTheDocument();
     expect(screen.getByText("Symptom Logging")).toBeInTheDocument();
@@ -114,11 +123,14 @@ describe("dashboard page", () => {
     expect(screen.getByText("Meal History")).toBeInTheDocument();
   });
 
-  it("shows structured forms for meal, symptom, and lifestyle logging", () => {
+  it("shows structured forms for meal, symptom, and lifestyle logging", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(screen.getByText("Meal Logging")).toBeInTheDocument();
     expect(screen.getByText("Symptom Logging Form")).toBeInTheDocument();
