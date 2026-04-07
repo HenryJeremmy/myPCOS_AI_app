@@ -3,6 +3,9 @@ import string
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 from app.models.user import User
+from app.models.meal_entry import MealEntry
+from app.models.symptom_entry import SymptomEntry
+from app.models.lifestyle_entry import LifestyleEntry
 from app.schemas.user import UserCreate
 from app.core.config import settings
 from pwdlib import PasswordHash
@@ -170,6 +173,24 @@ def authenticate_user(db: Session, email: str, password: str):
     if not user.is_verified:
         return None
     return user
+
+
+def change_password(db: Session, user: User, current_password: str, new_password: str) -> bool:
+    if not verify_password(current_password, user.hashed_password):
+        return False
+
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+    return True
+
+
+def delete_account(db: Session, user: User) -> None:
+    db.query(MealEntry).filter(MealEntry.user_id == user.id).delete()
+    db.query(SymptomEntry).filter(SymptomEntry.user_id == user.id).delete()
+    db.query(LifestyleEntry).filter(LifestyleEntry.user_id == user.id).delete()
+    db.delete(user)
+    db.commit()
 
 
 def create_access_token(user: User) -> str:

@@ -155,7 +155,7 @@ describe("dashboard page", () => {
         foods_text: "oats and banana",
         image_url: null,
         notes: "light breakfast",
-        logged_at: "2026-04-01T09:00:00Z",
+        created_at: "2026-04-01T09:00:00Z",
       }),
     });
     mockAuthenticatedUser();
@@ -204,7 +204,7 @@ describe("dashboard page", () => {
         bloating: true,
         mood_change: false,
         notes: "",
-        logged_at: "2026-04-01T10:00:00Z",
+        created_at: "2026-04-01T10:00:00Z",
       }),
     });
     mockAuthenticatedUser();
@@ -255,7 +255,7 @@ describe("dashboard page", () => {
         stress_level: "medium",
         mood: "okay",
         activity_notes: "",
-        logged_at: "2026-04-01T11:00:00Z",
+        created_at: "2026-04-01T11:00:00Z",
       }),
     });
     mockAuthenticatedUser();
@@ -306,7 +306,7 @@ describe("dashboard page", () => {
           foods_text: "rice and chicken",
           image_url: null,
           notes: "evening meal",
-          logged_at: "2026-04-01T19:00:00Z",
+          created_at: "2026-04-01T19:00:00Z",
         },
       ],
     });
@@ -332,7 +332,7 @@ describe("dashboard page", () => {
           bloating: true,
           mood_change: false,
           notes: "felt bloated after lunch",
-          logged_at: "2026-04-01T14:00:00Z",
+          created_at: "2026-04-01T14:00:00Z",
         },
       ],
     });
@@ -359,7 +359,7 @@ describe("dashboard page", () => {
           stress_level: "medium",
           mood: "okay",
           activity_notes: "walked after lunch",
-          logged_at: "2026-04-01T18:00:00Z",
+          created_at: "2026-04-01T18:00:00Z",
         },
       ],
     });

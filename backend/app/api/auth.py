@@ -2,7 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
-from app.schemas.user import UserCreate, UserRead, OTPVerify, OTPResend, SignupResponse
+from app.schemas.user import (
+    UserCreate,
+    UserRead,
+    OTPVerify,
+    OTPResend,
+    SignupResponse,
+    ChangePasswordRequest,
+)
 from app.schemas.token import Token
 from app.services.auth import (
     get_user_by_email, 
@@ -11,6 +18,8 @@ from app.services.auth import (
     generate_token,
     verify_otp,
     resend_otp,
+    change_password,
+    delete_account,
 )
 from app.core.config import settings
 from jose import JWTError, jwt
@@ -81,3 +90,32 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/me", response_model=UserRead)
 def me(current_user = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/change-password", response_model=dict)
+def change_password_endpoint(
+    password_data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not change_password(
+        db,
+        current_user,
+        password_data.current_password,
+        password_data.new_password,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    return {"message": "Password updated successfully"}
+
+
+@router.delete("/delete-account", response_model=dict)
+def delete_account_endpoint(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    delete_account(db, current_user)
+    return {"message": "Account deleted successfully"}

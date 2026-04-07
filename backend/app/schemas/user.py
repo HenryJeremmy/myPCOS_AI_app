@@ -30,3 +30,8 @@ class OTPResend(BaseModel):
 class SignupResponse(BaseModel):
     email: EmailStr
     message: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
