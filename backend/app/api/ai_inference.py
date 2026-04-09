@@ -25,6 +25,12 @@ MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 @router.post("/predict")
 async def predict_uploaded_image(file: UploadFile = File(...)):
+    if not food_detector.is_available:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Food detection model is not available in this environment.",
+        )
+
     file_suffix = Path(file.filename or "upload.jpg").suffix.lower()
 
     if (
@@ -59,6 +65,11 @@ async def predict_uploaded_image(file: UploadFile = File(...)):
 
     try:
         detections = food_detector.predict(temp_file_path)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
     finally:
         Path(temp_file_path).unlink(missing_ok=True)
 
