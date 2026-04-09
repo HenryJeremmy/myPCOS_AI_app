@@ -9,6 +9,7 @@ from app.schemas.user import (
     OTPResend,
     SignupResponse,
     ChangePasswordRequest,
+    UserProfileUpdate,
 )
 from app.schemas.token import Token
 from app.services.auth import (
@@ -20,6 +21,7 @@ from app.services.auth import (
     resend_otp,
     change_password,
     delete_account,
+    update_profile,
 )
 from app.core.config import settings
 from jose import JWTError, jwt
@@ -90,6 +92,20 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/me", response_model=UserRead)
 def me(current_user = Depends(get_current_user)):
     return current_user
+
+
+@router.put("/profile", response_model=UserRead)
+def update_profile_endpoint(
+    profile_data: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return update_profile(
+        db,
+        current_user,
+        profile_data.first_name,
+        profile_data.last_name,
+    )
 
 
 @router.post("/change-password", response_model=dict)

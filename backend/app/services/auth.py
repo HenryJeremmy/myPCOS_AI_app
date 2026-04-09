@@ -185,6 +185,14 @@ def change_password(db: Session, user: User, current_password: str, new_password
     return True
 
 
+def update_profile(db: Session, user: User, first_name: str, last_name: str) -> User:
+    user.first_name = first_name.strip()
+    user.last_name = last_name.strip()
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def delete_account(db: Session, user: User) -> None:
     db.query(MealEntry).filter(MealEntry.user_id == user.id).delete()
     db.query(SymptomEntry).filter(SymptomEntry.user_id == user.id).delete()

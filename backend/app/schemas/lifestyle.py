@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from pydantic import BaseModel, ConfigDict
 
 
@@ -9,6 +9,7 @@ class LifestyleEntryCreate(BaseModel):
     stress_level: str | None = None
     mood: str | None = None
     activity_notes: str | None = None
+    lifestyle_time: time | None = None
 
 
 class LifestyleEntryRead(BaseModel):
@@ -20,6 +21,7 @@ class LifestyleEntryRead(BaseModel):
     stress_level: str | None = None
     mood: str | None = None
     activity_notes: str | None = None
+    lifestyle_time: time | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

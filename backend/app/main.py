@@ -5,6 +5,10 @@ from app.api.health import router as health_router
 from app.api.auth import router as auth_router
 from app.core.config import settings
 from app.api.logging import router as logging_router
+from app.api.ai_test import router as ai_test_router
+from app.api.ai_inference import router as ai_inference_router
+
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -22,6 +26,9 @@ app.add_middleware(
 
 app.include_router(health_router, prefix=settings.api_prefix)
 app.include_router(auth_router, prefix=settings.api_prefix)
+app.include_router(logging_router, prefix=settings.api_prefix)
+app.include_router(ai_test_router, prefix=settings.api_prefix)
+app.include_router(ai_inference_router, prefix=settings.api_prefix)
 
 
 @app.get("/")
@@ -32,5 +39,4 @@ def read_root() -> dict[str, str]:
         "health": f"{settings.api_prefix}/health",
     }
 
-app.include_router(
-    logging_router, prefix=settings.api_prefix)
+
