@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, Time
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -13,6 +13,9 @@ class MealEntry(Base):
     foods_text = Column(Text, nullable=False)
     image_url = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
+    meal_time = Column(Time, nullable=True)
+    glycaemic_band = Column(String(20), nullable=True)
+    metabolic_summary = Column(Text, nullable=True)
 
     created_at = Column(
         DateTime,

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text, Time
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -15,6 +15,7 @@ class SymptomEntry(Base):
     mood_change = Column(Boolean, default=False, nullable=False)
 
     notes = Column(Text, nullable=True)
+    symptom_time = Column(Time, nullable=True)
 
     created_at = Column(
         DateTime,

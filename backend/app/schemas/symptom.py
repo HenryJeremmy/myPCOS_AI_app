@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from pydantic import BaseModel, ConfigDict
 
 
@@ -8,6 +8,7 @@ class SymptomEntryCreate(BaseModel):
     bloating: bool = False
     mood_change: bool = False
     notes: str | None = None
+    symptom_time: time | None = None
 
 
 class SymptomEntryRead(BaseModel):
@@ -18,6 +19,7 @@ class SymptomEntryRead(BaseModel):
     bloating: bool
     mood_change: bool
     notes: str | None = None
+    symptom_time: time | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

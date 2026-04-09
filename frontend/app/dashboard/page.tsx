@@ -64,6 +64,7 @@ const dashboardCards = [
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mealHistory, setMealHistory] = useState<MealHistoryItem[]>([]);
   const [mealType, setMealType] = useState("");
   const [fatigue, setFatigue] = useState("Yes");
@@ -143,20 +144,42 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[linear-gradient(135deg,#fbf6f8_0%,#f7edf2_40%,#f0e6f2_100%)] p-4 md:p-6">
         <div className="overflow-hidden rounded-[34px] shadow-[0_24px_60px_rgba(119,77,116,0.14)]">
           <div className="grid min-h-[calc(100vh-2rem)] lg:grid-cols-[280px_1fr]">
-            <aside className="flex flex-col justify-between bg-[linear-gradient(180deg,#5a2858_0%,#6b2e73_100%)] p-6 text-white">
+            {isSidebarOpen ? (
+              <button
+                type="button"
+                aria-label="Close navigation"
+                className="fixed inset-0 z-30 bg-[#341432]/45 lg:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            ) : null}
+            <aside
+              className={`fixed inset-y-0 left-0 z-40 flex w-[88vw] max-w-[320px] flex-col justify-between bg-[linear-gradient(180deg,#5a2858_0%,#6b2e73_100%)] p-6 text-white transition-transform duration-300 lg:static lg:w-auto lg:max-w-none lg:translate-x-0 ${
+                isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
+            >
               <div>
-                <div className="mb-10 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
-                    ♡
-                  </div>
-                  <div>
-                    <div className="text-[28px] font-extrabold tracking-tight">
-                      myPCOS
+                <div className="mb-10 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+                      ♡
                     </div>
-                    <p className="text-xs text-white/70">
-                      Premium monitoring suite
-                    </p>
+                    <div>
+                      <div className="text-[28px] font-extrabold tracking-tight">
+                        myPCOS
+                      </div>
+                      <p className="text-xs text-white/70">
+                        Premium monitoring suite
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    aria-label="Close menu"
+                    className="rounded-2xl border border-white/20 px-3 py-2 text-sm text-white/80 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="space-y-2">
@@ -168,6 +191,7 @@ export default function DashboardPage() {
                           ? "bg-white text-[#5a2858]"
                           : "text-white/80 hover:bg-white/10"
                       }`}
+                      onClick={() => setIsSidebarOpen(false)}
                     >
                       {item}
                     </div>
@@ -186,19 +210,30 @@ export default function DashboardPage() {
 
               <button
                 onClick={logout}
-                className="mt-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/15"
+                className=" cursor-pointer mt-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/15"
               >
                 Logout
               </button>
             </aside>
 
-            <main className="p-6 md:p-8">
+            <main className="min-w-0 p-5 md:p-8">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
+                  <div className="mb-4 lg:hidden">
+                    <button
+                      type="button"
+                      aria-label="Open navigation"
+                      className="inline-flex items-center gap-3 rounded-2xl border border-[#d7b4d2] bg-white/80 px-4 py-3 text-sm font-semibold text-[#5a2858] shadow-sm"
+                      onClick={() => setIsSidebarOpen(true)}
+                    >
+                      <span className="text-lg leading-none">☰</span>
+                      <span>Menu</span>
+                    </button>
+                  </div>
                   <p className="text-sm uppercase tracking-[0.18em] text-[#a66f94]">
                     Premium dashboard
                   </p>
-                  <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[#4f2550]">
+                  <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#4f2550] md:text-4xl">
                     {user?.first_name
                       ? `${getGreeting()}, ${user.first_name}`
                       : "Dashboard"}
@@ -214,8 +249,8 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <div className="mt-8 grid gap-5 xl:grid-cols-3">
+              <section className="mt-8">
+                <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
                   <section className="rounded-[24px] bg-white/85 p-5 shadow-sm">
                     <h2 className="text-lg font-bold text-[#592b5a]">
                       Meal Logging
@@ -259,7 +294,7 @@ export default function DashboardPage() {
 
                       <button
                         type="submit"
-                        className="rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+                        className=" cursor-pointer rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
                       >
                         Save Meal Log
                       </button>
@@ -313,7 +348,7 @@ export default function DashboardPage() {
 
                       <button
                         type="submit"
-                        className="rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+                        className=" cursor-pointer rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
                       >
                         Save Symptom Log
                       </button>
@@ -364,14 +399,17 @@ export default function DashboardPage() {
 
                       <button
                         type="submit"
-                        className="rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+                        className=" cursor-pointer rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
                       >
                         Save Lifestyle Log
                       </button>
                     </form>
                   </section>
                 </div>
+              </section>
 
+              <section className="mt-8">
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {dashboardCards.map((card) => (
                   <div
                     key={card.title}
@@ -471,7 +509,8 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
-              </div>
+                </div>
+              </section>
             </main>
           </div>
         </div>

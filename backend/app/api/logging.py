@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from fastapi import APIRouter, Depends, status
 
 from app.api.auth import get_db, get_current_user
+from app.services.metabolic_classifier import classify_meal
 from app.models.user import User
 from app.models.meal_entry import MealEntry
 from app.models.symptom_entry import SymptomEntry
@@ -21,12 +20,17 @@ def create_meal_entry(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    metabolic_classification = classify_meal(payload.foods_text)
+
     entry = MealEntry(
         user_id=current_user.id,
         meal_type=payload.meal_type,
         foods_text=payload.foods_text,
         image_url=payload.image_url,
         notes=payload.notes,
+        meal_time=payload.meal_time,
+        glycaemic_band=metabolic_classification["glycaemic_band"],
+        metabolic_summary=metabolic_classification["metabolic_summary"],
     )
     db.add(entry)
     db.commit()
@@ -47,6 +51,7 @@ def create_symptom_entry(
         bloating=payload.bloating,
         mood_change=payload.mood_change,
         notes=payload.notes,
+        symptom_time=payload.symptom_time,
     )
     db.add(entry)
     db.commit()
@@ -68,6 +73,7 @@ def create_lifestyle_entry(
         stress_level=payload.stress_level,
         mood=payload.mood,
         activity_notes=payload.activity_notes,
+        lifestyle_time=payload.lifestyle_time,
     )
     db.add(entry)
     db.commit()

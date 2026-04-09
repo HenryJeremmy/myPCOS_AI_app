@@ -74,22 +74,28 @@ describe("dashboard page", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows a personalised greeting using first_name", () => {
+  it("shows a personalised greeting using first_name", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(
       screen.getByText(/good (morning|afternoon|evening), henry/i),
     ).toBeInTheDocument();
   });
 
-  it("shows the executive sidebar navigation and logout action", () => {
+  it("shows the executive sidebar navigation and logout action", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(screen.getByText("Overview")).toBeInTheDocument();
     expect(screen.getByText("Meals")).toBeInTheDocument();
@@ -101,11 +107,14 @@ describe("dashboard page", () => {
     expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument();
   });
 
-  it("shows the main dashboard action cards", () => {
+  it("shows the main dashboard action cards", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(screen.getByText("Upload Meal Image")).toBeInTheDocument();
     expect(screen.getByText("Symptom Logging")).toBeInTheDocument();
@@ -114,11 +123,14 @@ describe("dashboard page", () => {
     expect(screen.getByText("Meal History")).toBeInTheDocument();
   });
 
-  it("shows structured forms for meal, symptom, and lifestyle logging", () => {
+  it("shows structured forms for meal, symptom, and lifestyle logging", async () => {
     mockDashboardFetch();
     mockAuthenticatedUser();
 
     render(<DashboardPage />);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
 
     expect(screen.getByText("Meal Logging")).toBeInTheDocument();
     expect(screen.getByText("Symptom Logging Form")).toBeInTheDocument();
@@ -143,7 +155,7 @@ describe("dashboard page", () => {
         foods_text: "oats and banana",
         image_url: null,
         notes: "light breakfast",
-        logged_at: "2026-04-01T09:00:00Z",
+        created_at: "2026-04-01T09:00:00Z",
       }),
     });
     mockAuthenticatedUser();
@@ -192,7 +204,7 @@ describe("dashboard page", () => {
         bloating: true,
         mood_change: false,
         notes: "",
-        logged_at: "2026-04-01T10:00:00Z",
+        created_at: "2026-04-01T10:00:00Z",
       }),
     });
     mockAuthenticatedUser();
@@ -243,7 +255,7 @@ describe("dashboard page", () => {
         stress_level: "medium",
         mood: "okay",
         activity_notes: "",
-        logged_at: "2026-04-01T11:00:00Z",
+        created_at: "2026-04-01T11:00:00Z",
       }),
     });
     mockAuthenticatedUser();
@@ -294,7 +306,7 @@ describe("dashboard page", () => {
           foods_text: "rice and chicken",
           image_url: null,
           notes: "evening meal",
-          logged_at: "2026-04-01T19:00:00Z",
+          created_at: "2026-04-01T19:00:00Z",
         },
       ],
     });
@@ -320,7 +332,7 @@ describe("dashboard page", () => {
           bloating: true,
           mood_change: false,
           notes: "felt bloated after lunch",
-          logged_at: "2026-04-01T14:00:00Z",
+          created_at: "2026-04-01T14:00:00Z",
         },
       ],
     });
@@ -347,7 +359,7 @@ describe("dashboard page", () => {
           stress_level: "medium",
           mood: "okay",
           activity_notes: "walked after lunch",
-          logged_at: "2026-04-01T18:00:00Z",
+          created_at: "2026-04-01T18:00:00Z",
         },
       ],
     });
