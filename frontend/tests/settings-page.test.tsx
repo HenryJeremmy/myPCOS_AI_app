@@ -29,6 +29,7 @@ function mockAuthenticatedUser() {
       id: 1,
       email: 'user@example.com',
       first_name: 'Henry',
+      last_name: 'Chijioke',
       is_active: true,
       is_verified: true,
     },
@@ -53,15 +54,63 @@ describe('settings page', () => {
 
     render(<SettingsPage />);
 
-    expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText(/profile details/i)).toBeInTheDocument();
+    expect(screen.getByText(/account settings/i)).toBeInTheDocument();
     expect(screen.getByText(/change password/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: /delete account/i })
-    ).toBeInTheDocument();
-    expect(screen.getByText(/user@example.com/i)).toBeInTheDocument();
-    expect(screen.getByText(/henry/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/first name/i)).toHaveValue('Henry');
+    expect(screen.getByLabelText(/last name/i)).toHaveValue('Chijioke');
+    expect(screen.getByLabelText(/email/i)).toHaveValue('user@example.com');
+    expect(screen.getByLabelText(/email/i)).toHaveAttribute('readonly');
   });
+});
+
+it('submits the profile details form', async () => {
+  const mockFetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      id: 1,
+      email: 'user@example.com',
+      first_name: 'Ada',
+      last_name: 'Okafor',
+      is_active: true,
+      is_verified: true,
+    }),
+  });
+
+  vi.stubGlobal('fetch', mockFetch);
+  mockAuthenticatedUser();
+
+  render(<SettingsPage />);
+
+  fireEvent.change(screen.getByLabelText(/first name/i), {
+    target: { value: 'Ada' },
+  });
+
+  fireEvent.change(screen.getByLabelText(/last name/i), {
+    target: { value: 'Okafor' },
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: /update profile/i }));
+
+  await waitFor(() => {
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/auth/profile'),
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token',
+        }),
+        body: JSON.stringify({
+          first_name: 'Ada',
+          last_name: 'Okafor',
+        }),
+      })
+    );
+  });
+
+  expect(
+    await screen.findByText(/profile updated successfully/i)
+  ).toBeInTheDocument();
 });
 
 it('submits the change password form', async () => {

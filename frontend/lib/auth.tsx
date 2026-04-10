@@ -8,6 +8,7 @@ export interface User {
   id: number;
   email: string;
   first_name?: string;
+  last_name?: string;
   is_active: boolean;
   is_verified: boolean;
 }
@@ -29,20 +30,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = Cookies.get('access_token');
-    if (token) {
+    let isMounted = true;
+
+    async function initialiseAuth() {
+      const token = Cookies.get('access_token');
+
+      if (!token) {
+        if (isMounted) setIsLoading(false);
+        return;
+      }
+
       try {
         const decoded = jwtDecode<{ sub: string; exp: number }>(token);
         if (decoded.exp * 1000 > Date.now()) {
-          getCurrentUser();
+          await getCurrentUser();
         } else {
           Cookies.remove('access_token');
+          if (isMounted) setUser(null);
         }
       } catch (error) {
         Cookies.remove('access_token');
+        if (isMounted) setUser(null);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     }
-    setIsLoading(false);
+
+    initialiseAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getCurrentUser = async () => {

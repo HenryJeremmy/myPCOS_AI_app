@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Eye, EyeOff, CheckCircle2, HeartPulse } from 'lucide-react';
@@ -63,38 +64,45 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 md:py-16">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-rose-50 via-pink-50 to-violet-100 shadow-2xl ring-1 ring-white/50">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,192,203,0.45),_transparent_55%)]" />
+      <div className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#fcf7fa_0%,#f4ebf1_42%,#ece2ee_100%)] shadow-2xl ring-1 ring-white/50">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(207,65,202,0.16),_transparent_55%)]" />
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="relative hidden md:flex items-center justify-center p-10">
-            <div className="relative w-full max-w-xs rounded-2xl bg-white/70 p-6 shadow-xl backdrop-blur">
-              <div className="mb-4 flex items-center justify-center gap-2 text-3xl font-bold tracking-wide text-violet-700">
-                <HeartPulse className="h-8 w-8 text-fuchsia-500" />
+            <div className="relative w-full max-w-xs rounded-2xl bg-white/76 p-6 shadow-xl backdrop-blur">
+              <Link
+                href="/"
+                className="mb-4 flex items-center justify-center gap-2 text-3xl font-bold tracking-wide text-[#4f2550]"
+              >
+                <HeartPulse className="h-8 w-8 text-[#8a3fd8]" />
                 myPCOS
-              </div>
-              <p className="text-center text-sm text-violet-600">
+              </Link>
+              <p className="text-center text-sm text-[#6f5a72]">
                 Track your meals, symptoms, and health patterns with confidence.
               </p>
-              <div className="mt-6 h-36 rounded-xl bg-gradient-to-br from-rose-200 via-pink-100 to-violet-200 px-4 py-4">
-                <div className="h-20 w-full rounded-xl bg-gradient-to-br from-rose-300 via-pink-200 to-violet-300" />
+              <div className="mt-6 h-36 rounded-xl bg-[linear-gradient(135deg,#fff6fa_0%,#f5ebf8_100%)] px-4 py-4">
+                <div className="h-20 w-full rounded-xl bg-[linear-gradient(135deg,#d98bc1_0%,#b678d4_100%)]" />
               </div>
             </div>
           </div>
 
           <div className="relative px-6 py-10 sm:px-10 md:px-12 lg:px-14">
             <div className="mb-8 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/60 text-purple-600 shadow-md ring-1 ring-white/70">
+              <Link
+                href="/"
+                aria-label="Go to landing page"
+                className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/70 text-[#7d45bf] shadow-md ring-1 ring-white/70 transition hover:bg-white"
+              >
                 <HeartPulse size={28} />
-              </div>
-              <h1 className="text-3xl font-bold text-violet-900">{title}</h1>
-              <p className="mt-2 text-sm text-violet-600">{subtitle}</p>
+              </Link>
+              <h1 className="text-3xl font-bold text-[#4f2550]">{title}</h1>
+              <p className="mt-2 text-sm text-[#6f5a72]">{subtitle}</p>
             </div>
 
             <form className="space-y-4" onSubmit={onSubmit}>
               {mode === 'signup' && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-violet-700">First Name</label>
+                    <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-[#5a2858]">First Name</label>
                     <input
                       id="firstName"
                       value={firstName}
@@ -102,11 +110,11 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                       required
                       type="text"
                       placeholder="Jane"
-                      className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                      className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                     />
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-violet-700">Last Name</label>
+                    <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-[#5a2858]">Last Name</label>
                     <input
                       id="lastName"
                       value={lastName}
@@ -114,14 +122,14 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                       required
                       type="text"
                       placeholder="Doe"
-                      className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                      className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                     />
                   </div>
                 </div>
               )}
 
               <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-violet-700">Email Address</label>
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#5a2858]">Email Address</label>
                 <input
                   id="email"
                   value={email}
@@ -129,12 +137,12 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                   required
                   type="email"
                   placeholder=""
-                  className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                  className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-medium text-violet-700">Password</label>
+                <label htmlFor="password" className="mb-2 block text-sm font-medium text-[#5a2858]">Password</label>
                 <div className="relative">
                   <input
                     id="password"
@@ -143,11 +151,11 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                     required
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 pr-10 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                    className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 pr-10 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-500 hover:text-violet-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8d7391] hover:text-[#5a2858]"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label="Show password"
                   >
@@ -158,7 +166,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
 
               {mode === 'signup' && (
                 <div>
-                  <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-violet-700">Confirm Password</label>
+                  <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-[#5a2858]">Confirm Password</label>
                   <div className="relative">
                     <input
                       id="confirmPassword"
@@ -167,11 +175,11 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                       required
                       type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 pr-10 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                      className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 pr-10 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-500 hover:text-violet-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8d7391] hover:text-[#5a2858]"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       aria-label="Show confirm password"
                     >
@@ -183,13 +191,13 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
 
               {isOtpSent && (
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-violet-700">OTP Code</label>
+                  <label className="mb-2 block text-sm font-medium text-[#5a2858]">OTP Code</label>
                   <input
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     type="text"
                     placeholder="123456"
-                    className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-violet-800 focus:border-fuchsia-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                    className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                   />
                 </div>
               )}
@@ -203,20 +211,20 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-3 font-semibold text-white shadow-lg shadow-fuchsia-300/40 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-3 font-semibold text-white shadow-lg shadow-fuchsia-300/40 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLoading ? 'Please wait...' : submitLabel}
               </button>
             </form>
 
-            <p className="mt-5 text-center text-sm text-violet-600">
+            <p className="mt-5 text-center text-sm text-[#6f5a72]">
               {switchLabel}{' '}
-              <a href={switchHref} className="font-semibold text-fuchsia-500 hover:text-fuchsia-600">
+              <a href={switchHref} className="font-semibold text-[#8a3fd8] hover:text-[#6b2e73]">
                 {mode === 'login' ? 'Create Account' : 'Sign In'}
               </a>
             </p>
 
-            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-violet-500">
+            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[#8d7391]">
               <CheckCircle2 size={16} />
               <span>Secure encryption and empathetic care, designed for your wellbeing</span>
             </div>
