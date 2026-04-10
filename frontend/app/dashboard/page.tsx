@@ -1,9 +1,67 @@
 "use client";
 
-import { useAuth } from "@/lib/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Cookies from "js-cookie";
+import Link from "next/link";
 import { ProtectedRoute } from "@/components/protected-route";
+import { useAuth } from "@/lib/auth";
+
+type MealEntry = {
+  id: number;
+  meal_type: string;
+  foods_text: string;
+  notes: string | null;
+  meal_time: string | null;
+  glycaemic_band: string | null;
+  metabolic_summary: string | null;
+  created_at: string;
+};
+
+type SymptomEntry = {
+  id: number;
+  fatigue: boolean;
+  cravings: boolean;
+  bloating: boolean;
+  mood_change: boolean;
+  notes: string | null;
+  symptom_time: string | null;
+  created_at: string;
+};
+
+type LifestyleEntry = {
+  id: number;
+  sleep_hours: number | null;
+  exercise_minutes: number | null;
+  water_litres: number | null;
+  stress_level: string | null;
+  mood: string | null;
+  activity_notes: string | null;
+  lifestyle_time: string | null;
+  created_at: string;
+};
+
+type PatternRow = {
+  behaviour: string;
+  symptom: string;
+  count: number;
+};
+
+type ActivityItem = {
+  id: string;
+  title: string;
+  detail: string;
+  createdAt: string;
+};
+
+const sidebarItems = [
+  { label: "Overview", href: "/dashboard" },
+  { label: "Meals", href: "/meals" },
+  { label: "Symptoms", href: "/symptoms" },
+  { label: "Lifestyle", href: "/lifestyle" },
+  { label: "Insights", href: "/insights" },
+  { label: "History", href: "/history" },
+  { label: "Settings", href: "/settings" },
+];
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -11,133 +69,488 @@ function getGreeting() {
   if (hour < 16) return "Good afternoon";
   return "Good evening";
 }
-type MealHistoryItem = {
-  id: number;
-  meal_type: string;
-  foods_text: string;
-  notes: string;
-  created_at: string;
-};
 
-type SymptomHistoryItem = {
-  id: number;
-  fatigue: boolean;
-  cravings: boolean;
-  bloating: boolean;
-  mood_change: boolean;
-  notes: string;
-  created_at: string;
-};
+function getStartOfToday() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+}
 
-type LifestyleHistoryItem = {
-  id: number;
-  sleep_hours: number;
-  exercise_minutes: number;
-  water_litres: number;
-  stress_level: string;
-  mood: string;
-  activity_notes: string;
-  created_at: string;
-};
+function getDateKey(dateString: string) {
+  const date = new Date(dateString);
+  if (!Number.isFinite(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
-const sidebarItems = [
-  "Overview",
-  "Meals",
-  "Symptoms",
-  "Lifestyle",
-  "Insights",
-  "History",
-  "Settings",
-];
+function normaliseTimeValue(timeValue: string | null | undefined) {
+  if (!timeValue) return null;
+  const match = timeValue.match(/^(\d{2}):(\d{2})/);
+  if (!match) return null;
+  return `${match[1]}:${match[2]}`;
+}
 
-const dashboardCards = [
-  {
-    title: "Upload Meal Image",
-    description: "Support AI-assisted meal capture and faster food logging.",
-  },
+function buildEventTimestamp(
+  dateString: string,
+  timeValue: string | null | undefined,
+) {
+  const dateKey = getDateKey(dateString);
+  const normalisedTime = normaliseTimeValue(timeValue);
 
-  {
-    title: "Insights",
-    description: "View repeated behavioural patterns and feedback over time.",
-  },
-];
+  if (dateKey && normalisedTime) {
+    return new Date(`${dateKey}T${normalisedTime}:00`).getTime();
+  }
+
+  const fallback = new Date(dateString).getTime();
+  return Number.isFinite(fallback) ? fallback : null;
+}
+
+function toTitleCase(value: string) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}
+
+function symptomLabel(
+  symptom: keyof Pick<
+    SymptomEntry,
+    "fatigue" | "cravings" | "bloating" | "mood_change"
+  >,
+) {
+  switch (symptom) {
+    case "fatigue":
+      return "Fatigue";
+    case "cravings":
+      return "Cravings";
+    case "bloating":
+      return "Bloating";
+    case "mood_change":
+      return "Mood change";
+  }
+}
+
+function buildPatternRows(
+  meals: MealEntry[],
+  symptoms: SymptomEntry[],
+  lifestyle: LifestyleEntry[],
+) {
+  const symptomKeys = ["fatigue", "cravings", "bloating", "mood_change"] as const;
+  const pairCounts = new Map<string, PatternRow>();
+  const associationWindowMs = 12 * 60 * 60 * 1000;
+
+  const mealEvents = meals
+    .map((meal) => ({
+      band: meal.glycaemic_band?.toLowerCase() ?? null,
+      timestamp: buildEventTimestamp(meal.created_at, meal.meal_time),
+    }))
+    .filter(
+      (event): event is { band: string; timestamp: number } =>
+        Boolean(
+          event.band &&
+            event.band !== "unknown" &&
+            event.timestamp !== null &&
+            Number.isFinite(event.timestamp),
+        ),
+    );
+
+  const lifestyleEvents = lifestyle
+    .map((entry) => ({
+      lowSleep: (entry.sleep_hours ?? 0) > 0 && (entry.sleep_hours ?? 0) < 6,
+      highStress: (entry.stress_level ?? "").toLowerCase() === "high",
+      timestamp: buildEventTimestamp(entry.created_at, entry.lifestyle_time),
+    }))
+    .filter(
+      (event): event is {
+        lowSleep: boolean;
+        highStress: boolean;
+        timestamp: number;
+      } => event.timestamp !== null && Number.isFinite(event.timestamp),
+    );
+
+  function addPatternCount(behaviour: string, symptom: string) {
+    const key = `${behaviour}::${symptom}`;
+    const current = pairCounts.get(key);
+
+    if (current) {
+      current.count += 1;
+      return;
+    }
+
+    pairCounts.set(key, {
+      behaviour,
+      symptom,
+      count: 1,
+    });
+  }
+
+  symptoms.forEach((entry) => {
+    const symptomTimestamp = buildEventTimestamp(
+      entry.created_at,
+      entry.symptom_time,
+    );
+    if (symptomTimestamp === null || !Number.isFinite(symptomTimestamp)) return;
+
+    const matchedBehaviours = new Map<string, Set<string>>();
+    symptomKeys.forEach((key) => {
+      if (!entry[key]) return;
+
+      const symptomName = symptomLabel(key);
+      const behaviourSet = matchedBehaviours.get(symptomName) ?? new Set<string>();
+
+      mealEvents.forEach((mealEvent) => {
+        const timeDifference = symptomTimestamp - mealEvent.timestamp;
+        if (timeDifference < 0 || timeDifference > associationWindowMs) return;
+        behaviourSet.add(`${toTitleCase(mealEvent.band)} glycaemic meals`);
+      });
+
+      lifestyleEvents.forEach((lifestyleEvent) => {
+        const timeDifference = symptomTimestamp - lifestyleEvent.timestamp;
+        if (timeDifference < 0 || timeDifference > associationWindowMs) return;
+
+        if (lifestyleEvent.lowSleep) {
+          behaviourSet.add("Sleep under 6 hours");
+        }
+
+        if (lifestyleEvent.highStress) {
+          behaviourSet.add("High stress");
+        }
+      });
+
+      matchedBehaviours.set(symptomName, behaviourSet);
+    });
+
+    matchedBehaviours.forEach((behaviours, symptomName) => {
+      behaviours.forEach((behaviour) => {
+        addPatternCount(behaviour, symptomName);
+      });
+    });
+  });
+
+  return [...pairCounts.values()]
+    .filter((row) => row.count >= 3)
+    .sort((a, b) => b.count - a.count);
+}
+
+function extractSymptomNames(entry: SymptomEntry) {
+  const symptoms: string[] = [];
+  if (entry.fatigue) symptoms.push("Fatigue");
+  if (entry.cravings) symptoms.push("Cravings");
+  if (entry.bloating) symptoms.push("Bloating");
+  if (entry.mood_change) symptoms.push("Mood change");
+  return symptoms;
+}
+
+function formatRelativeDate(dateString: string) {
+  const date = new Date(dateString);
+  if (!Number.isFinite(date.getTime())) return dateString;
+
+  const today = getStartOfToday();
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((today.getTime() - target.getTime()) / (24 * 60 * 60 * 1000));
+
+  if (diff <= 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  return `${diff} days ago`;
+}
+
+function Sidebar({
+  isOpen,
+  onClose,
+  onLogout,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 flex w-[88vw] max-w-[320px] flex-col justify-between bg-[linear-gradient(180deg,#5a2858_0%,#6b2e73_100%)] p-6 text-white transition-transform duration-300 lg:static lg:w-auto lg:max-w-none lg:translate-x-0 ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
+      <div>
+        <div className="mb-10 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-3" onClick={onClose}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+              ♡
+            </div>
+            <div>
+              <div className="text-[28px] font-extrabold tracking-tight">
+                myPCOS
+              </div>
+              <p className="text-xs text-white/70">Premium monitoring suite</p>
+            </div>
+          </Link>
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="rounded-2xl border border-white/20 px-3 py-2 text-sm text-white/80 lg:hidden"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {sidebarItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`block rounded-2xl px-4 py-3 text-sm font-medium ${
+                item.label === "Overview"
+                  ? "bg-white text-[#5a2858]"
+                  : "text-white/80 hover:bg-white/10"
+              }`}
+              onClick={onClose}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-[28px] bg-white/10 p-5">
+          <p className="text-sm font-semibold">Dashboard focus</p>
+          <p className="mt-2 text-sm leading-6 text-white/75">
+            A clear overview of this week&apos;s logging activity, consistency,
+            and any repeated behavioural patterns worth reviewing.
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onLogout}
+        className="mt-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/15"
+      >
+        Logout
+      </button>
+    </aside>
+  );
+}
+
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[28px] bg-white/88 p-6 shadow-sm">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#9f6f9d]">
+        {title}
+      </p>
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+function WeeklyBars({
+  data,
+}: {
+  data: Array<{ label: string; total: number; heightPercent: number }>;
+}) {
+  return (
+    <div className="h-[220px] rounded-[24px] bg-[linear-gradient(180deg,#fff8fb_0%,#f5eef7_100%)] p-5">
+      <div className="flex h-full items-end gap-3">
+        {data.map((day) => (
+          <div key={day.label} className="flex flex-1 flex-col items-center gap-2">
+            <div className="text-xs font-semibold text-[#7a647f]">
+              {day.total}
+            </div>
+            <div
+              className="w-full rounded-t-2xl bg-gradient-to-t from-[#8a3fd8] to-[#cf41ca]"
+              style={{ height: `${Math.max(day.heightPercent, day.total > 0 ? 10 : 4)}%` }}
+            />
+            <span className="text-xs text-[#826d86]">{day.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [mealHistory, setMealHistory] = useState<MealHistoryItem[]>([]);
-  const [mealType, setMealType] = useState("");
-  const [fatigue, setFatigue] = useState("Yes");
-  const [cravings, setCravings] = useState("No");
-  const [sleepHours, setSleepHours] = useState("");
-  const [exerciseMinutes, setExerciseMinutes] = useState("");
-  const [foodsText, setFoodsText] = useState("");
-  const [symptomHistory, setSymptomHistory] = useState<SymptomHistoryItem[]>([],);
-  const [lifestyleHistory, setLifestyleHistory] = useState<LifestyleHistoryItem[]>([]);
+  const [mealEntries, setMealEntries] = useState<MealEntry[]>([]);
+  const [symptomEntries, setSymptomEntries] = useState<SymptomEntry[]>([]);
+  const [lifestyleEntries, setLifestyleEntries] = useState<LifestyleEntry[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    async function loadMealHistory() {
+    async function loadDashboardData() {
       const token = Cookies.get("access_token");
-      if (!token) return;
+      if (!token) {
+        setLoadError("You need to be logged in to view the dashboard.");
+        return;
+      }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/meals`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      setLoadError("");
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-      if (!response.ok) return;
+      try {
+        const [mealsResponse, symptomsResponse, lifestyleResponse] =
+          await Promise.all([
+            fetch(`${baseUrl}/api/v1/logs/meals`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`${baseUrl}/api/v1/logs/symptoms`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`${baseUrl}/api/v1/logs/lifestyle`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
 
-      const data = await response.json();
-      setMealHistory(Array.isArray(data) ? data : []);
+        if (!mealsResponse.ok || !symptomsResponse.ok || !lifestyleResponse.ok) {
+          setLoadError("Unable to load dashboard data right now.");
+          return;
+        }
+
+        const [mealsData, symptomsData, lifestyleData] = await Promise.all([
+          mealsResponse.json(),
+          symptomsResponse.json(),
+          lifestyleResponse.json(),
+        ]);
+
+        setMealEntries(Array.isArray(mealsData) ? mealsData : []);
+        setSymptomEntries(Array.isArray(symptomsData) ? symptomsData : []);
+        setLifestyleEntries(Array.isArray(lifestyleData) ? lifestyleData : []);
+      } catch {
+        setLoadError("Unable to load dashboard data right now.");
+      }
     }
 
-    loadMealHistory();
-
-    async function loadSymptomHistory() {
-      const token = Cookies.get("access_token");
-      if (!token) return;
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/symptoms`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!response.ok) return;
-
-      const data = await response.json();
-      setSymptomHistory(Array.isArray(data) ? data : []);
-    }
-
-    loadSymptomHistory();
-
-    async function loadLifestyleHistory() {
-      const token = Cookies.get("access_token");
-      if (!token) return;
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/lifestyle`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!response.ok) return;
-
-      const data = await response.json();
-      setLifestyleHistory(Array.isArray(data) ? data : []);
-    }
-    loadLifestyleHistory();
+    loadDashboardData();
   }, []);
+
+  const dashboardData = useMemo(() => {
+    const today = getStartOfToday();
+    const dates = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - index));
+      return date;
+    });
+
+    const last7Cutoff = new Date(today);
+    last7Cutoff.setDate(last7Cutoff.getDate() - 6);
+
+    const mealsThisWeek = mealEntries.filter(
+      (entry) => new Date(entry.created_at) >= last7Cutoff,
+    );
+    const symptomsThisWeek = symptomEntries.filter(
+      (entry) => new Date(entry.created_at) >= last7Cutoff,
+    );
+    const lifestyleThisWeek = lifestyleEntries.filter(
+      (entry) => new Date(entry.created_at) >= last7Cutoff,
+    );
+
+    const patterns = buildPatternRows(
+      mealsThisWeek,
+      symptomsThisWeek,
+      lifestyleThisWeek,
+    );
+
+    const dailyCounts = dates.map((date) => {
+      const dateKey = getDateKey(date.toISOString());
+      const mealCount = mealsThisWeek.filter(
+        (entry) => getDateKey(entry.created_at) === dateKey,
+      ).length;
+      const symptomCount = symptomsThisWeek.filter(
+        (entry) => getDateKey(entry.created_at) === dateKey,
+      ).length;
+      const lifestyleCount = lifestyleThisWeek.filter(
+        (entry) => getDateKey(entry.created_at) === dateKey,
+      ).length;
+
+      return {
+        label: date.toLocaleDateString([], { weekday: "short" }),
+        total: mealCount + symptomCount + lifestyleCount,
+      };
+    });
+
+    const maxDailyCount = Math.max(...dailyCounts.map((item) => item.total), 0);
+    const chartData = dailyCounts.map((item) => ({
+      ...item,
+      heightPercent: maxDailyCount > 0 ? (item.total / maxDailyCount) * 100 : 0,
+    }));
+
+    const activeDays = new Set(
+      [...mealsThisWeek, ...symptomsThisWeek, ...lifestyleThisWeek].map((entry) =>
+        getDateKey(entry.created_at),
+      ),
+    ).size;
+    const consistency = Math.round((activeDays / 7) * 100);
+
+    const activityItems: ActivityItem[] = [
+      ...mealEntries.map((entry) => ({
+        id: `meal-${entry.id}`,
+        title: `${entry.meal_type || "Meal"} logged`,
+        detail: entry.foods_text || "Meal entry saved",
+        createdAt: entry.created_at,
+      })),
+      ...symptomEntries.map((entry) => ({
+        id: `symptom-${entry.id}`,
+        title: `${extractSymptomNames(entry).join(" and ") || "Symptom"} recorded`,
+        detail: entry.notes?.trim() || "Symptom entry saved",
+        createdAt: entry.created_at,
+      })),
+      ...lifestyleEntries.map((entry) => ({
+        id: `lifestyle-${entry.id}`,
+        title: `Lifestyle entry logged`,
+        detail:
+          entry.activity_notes?.trim() ||
+          `Sleep ${entry.sleep_hours ?? 0}h, stress ${entry.stress_level ?? "not set"}`,
+        createdAt: entry.created_at,
+      })),
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(0, 3);
+
+    const topPattern = patterns[0] ?? null;
+
+    return {
+      mealsThisWeek,
+      symptomsThisWeek,
+      lifestyleThisWeek,
+      patterns,
+      chartData,
+      consistency,
+      activeDays,
+      activityItems,
+      topPattern,
+    };
+  }, [lifestyleEntries, mealEntries, symptomEntries]);
+
+  const stats = [
+    {
+      label: "Meals logged",
+      value: dashboardData.mealsThisWeek.length,
+      note: "This week",
+    },
+    {
+      label: "Symptoms logged",
+      value: dashboardData.symptomsThisWeek.length,
+      note: "This week",
+    },
+    {
+      label: "Lifestyle entries",
+      value: dashboardData.lifestyleThisWeek.length,
+      note: "This week",
+    },
+    {
+      label: "Insights found",
+      value: dashboardData.patterns.length,
+      note: "This week",
+    },
+  ];
 
   return (
     <ProtectedRoute>
@@ -152,72 +565,15 @@ export default function DashboardPage() {
                 onClick={() => setIsSidebarOpen(false)}
               />
             ) : null}
-            <aside
-              className={`fixed inset-y-0 left-0 z-40 flex w-[88vw] max-w-[320px] flex-col justify-between bg-[linear-gradient(180deg,#5a2858_0%,#6b2e73_100%)] p-6 text-white transition-transform duration-300 lg:static lg:w-auto lg:max-w-none lg:translate-x-0 ${
-                isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-              }`}
-            >
-              <div>
-                <div className="mb-10 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
-                      ♡
-                    </div>
-                    <div>
-                      <div className="text-[28px] font-extrabold tracking-tight">
-                        myPCOS
-                      </div>
-                      <p className="text-xs text-white/70">
-                        Premium monitoring suite
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Close menu"
-                    className="rounded-2xl border border-white/20 px-3 py-2 text-sm text-white/80 lg:hidden"
-                    onClick={() => setIsSidebarOpen(false)}
-                  >
-                    ✕
-                  </button>
-                </div>
 
-                <div className="space-y-2">
-                  {sidebarItems.map((item, index) => (
-                    <div
-                      key={item}
-                      className={`rounded-2xl px-4 py-3 text-sm font-medium ${
-                        index === 0
-                          ? "bg-white text-[#5a2858]"
-                          : "text-white/80 hover:bg-white/10"
-                      }`}
-                      onClick={() => setIsSidebarOpen(false)}
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-8 rounded-[28px] bg-white/10 p-5">
-                  <p className="text-sm font-semibold">System purpose</p>
-                  <p className="mt-2 text-sm leading-6 text-white/75">
-                    Help users notice repeated non-diagnostic links between
-                    dietary patterns, lifestyle behaviours, and symptoms over
-                    time.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={logout}
-                className=" cursor-pointer mt-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/15"
-              >
-                Logout
-              </button>
-            </aside>
+            <Sidebar
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+              onLogout={logout}
+            />
 
             <main className="min-w-0 p-5 md:p-8">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-4">
                 <div>
                   <div className="mb-4 lg:hidden">
                     <button
@@ -230,286 +586,121 @@ export default function DashboardPage() {
                       <span>Menu</span>
                     </button>
                   </div>
-                  <p className="text-sm uppercase tracking-[0.18em] text-[#a66f94]">
-                    Premium dashboard
+                  <p className="text-sm uppercase tracking-[0.18em] text-[#946183]">
+                    Overview
                   </p>
                   <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#4f2550] md:text-4xl">
                     {user?.first_name
                       ? `${getGreeting()}, ${user.first_name}`
-                      : "Dashboard"}
+                      : "Weekly overview"}
                   </h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-[#7d627e] md:text-base">
-                    A mature executive workspace for structured logging,
-                    behaviour tracking, and future research-aligned insight
-                    generation.
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-[#69536d] md:text-base">
+                    A clear overview of this week&apos;s logging activity,
+                    consistency, and any repeated behavioural patterns worth
+                    reviewing.
                   </p>
                 </div>
-                <button className="rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-fuchsia-200">
-                  Create entry
-                </button>
               </div>
 
-              <section className="mt-8">
-                <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-                  <section className="rounded-[24px] bg-white/85 p-5 shadow-sm">
-                    <h2 className="text-lg font-bold text-[#592b5a]">
-                      Meal Logging
-                    </h2>
-
-                    <form
-                      className="mt-4 space-y-4"
-                      onSubmit={handleMealSubmit}
-                    >
-                      <div>
-                        <label
-                          htmlFor="mealType"
-                          className="mb-2 block text-sm font-medium text-[#5f2f60]"
-                        >
-                          Meal Type
-                        </label>
-                        <input
-                          id="mealType"
-                          type="text"
-                          value={mealType}
-                          onChange={(e) => setMealType(e.target.value)}
-                          className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-[#4f2550] focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="foods"
-                          className="mb-2 block text-sm font-medium text-[#5f2f60]"
-                        >
-                          Foods
-                        </label>
-                        <textarea
-                          id="foods"
-                          rows={4}
-                          value={foodsText}
-                          onChange={(e) => setFoodsText(e.target.value)}
-                          className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-[#4f2550] focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className=" cursor-pointer rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
-                      >
-                        Save Meal Log
-                      </button>
-                    </form>
-                  </section>
-
-                  <section className="rounded-[24px] bg-white/85 p-5 shadow-sm">
-                    <h2 className="text-lg font-bold text-[#592b5a]">
-                      Symptom Logging Form
-                    </h2>
-
-                    <form
-                      className="mt-4 space-y-4"
-                      onSubmit={handleSymptomSubmit}
-                    >
-                      <div>
-                        <label
-                          htmlFor="fatigue"
-                          className="mb-2 block text-sm font-medium text-[#5f2f60]"
-                        >
-                          Fatigue
-                        </label>
-                        <select
-                          id="fatigue"
-                          value={fatigue}
-                          onChange={(e) => setFatigue(e.target.value)}
-                          className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-[#4f2550] focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
-                        >
-                          <option>Yes</option>
-                          <option>No</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="cravings"
-                          className="mb-2 block text-sm font-medium text-[#5f2f60]"
-                        >
-                          Cravings
-                        </label>
-                        <select
-                          id="cravings"
-                          value={cravings}
-                          onChange={(e) => setCravings(e.target.value)}
-                          className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-[#4f2550] focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
-                        >
-                          <option>Yes</option>
-                          <option>No</option>
-                        </select>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className=" cursor-pointer rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
-                      >
-                        Save Symptom Log
-                      </button>
-                    </form>
-                  </section>
-
-                  <section className="rounded-[24px] bg-white/85 p-5 shadow-sm">
-                    <h2 className="text-lg font-bold text-[#592b5a]">
-                      Lifestyle Logging Form
-                    </h2>
-
-                    <form
-                      className="mt-4 space-y-4"
-                      onSubmit={handleLifestyleSubmit}
-                    >
-                      <div>
-                        <label
-                          htmlFor="sleepHours"
-                          className="mb-2 block text-sm font-medium text-[#5f2f60]"
-                        >
-                          Sleep Hours
-                        </label>
-                        <input
-                          id="sleepHours"
-                          type="number"
-                          step="0.1"
-                          value={sleepHours}
-                          onChange={(e) => setSleepHours(e.target.value)}
-                          className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-[#4f2550] focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="exerciseMinutes"
-                          className="mb-2 block text-sm font-medium text-[#5f2f60]"
-                        >
-                          Exercise Minutes
-                        </label>
-                        <input
-                          id="exerciseMinutes"
-                          type="number"
-                          value={exerciseMinutes}
-                          onChange={(e) => setExerciseMinutes(e.target.value)}
-                          className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-[#4f2550] focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className=" cursor-pointer rounded-2xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
-                      >
-                        Save Lifestyle Log
-                      </button>
-                    </form>
-                  </section>
+              {loadError ? (
+                <div className="mt-6 rounded-[24px] bg-[#fff1f4] px-5 py-4 text-sm font-medium text-[#a43f62]">
+                  {loadError}
                 </div>
+              ) : null}
+
+              <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {stats.map((stat) => (
+                  <Card key={stat.label} title={stat.label}>
+                    <p className="text-3xl font-bold text-[#592b5a]">
+                      {stat.value}
+                    </p>
+                    <p className="mt-1 text-sm text-[#695c70]">{stat.note}</p>
+                  </Card>
+                ))}
               </section>
 
-              <section className="mt-8">
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {dashboardCards.map((card) => (
-                  <div
-                    key={card.title}
-                    className="rounded-[24px] bg-white/85 p-5 shadow-sm"
-                  >
-                    <h2 className="text-lg font-bold text-[#592b5a]">
-                      {card.title}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-[#7e6880]">
-                      {card.description}
+              <section className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+                <Card title="Weekly logging activity">
+                  <p className="mb-4 text-sm leading-6 text-[#695c70]">
+                    A quick view of how many entries were recorded each day this
+                    week.
+                  </p>
+                  <WeeklyBars data={dashboardData.chartData} />
+                </Card>
+
+                <Card title="Recent activity">
+                  <div className="space-y-3">
+                    {dashboardData.activityItems.length === 0 ? (
+                      <div className="rounded-[22px] bg-[#fcf6fa] px-4 py-4 text-sm text-[#695c70]">
+                        No activity logged yet. Start with Meals, Symptoms, or
+                        Lifestyle to build your weekly overview.
+                      </div>
+                    ) : (
+                      dashboardData.activityItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-[22px] bg-[#fcf6fa] px-4 py-4 text-sm text-[#695c70]"
+                        >
+                          <p className="font-semibold text-[#592b5a]">
+                            {item.title}
+                          </p>
+                          <p className="mt-1">{item.detail}</p>
+                          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8d7391]">
+                            {formatRelativeDate(item.createdAt)}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </Card>
+              </section>
+
+              <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
+                <Card title="Consistency">
+                  <div className="rounded-[24px] bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] p-5">
+                    <p className="text-2xl font-bold text-[#592b5a]">
+                      {dashboardData.consistency}% this week
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[#695c70]">
+                      You logged entries on {dashboardData.activeDays} out of 7
+                      days. Consistent logging improves later insight quality.
                     </p>
                   </div>
-                ))}
+                </Card>
 
-                <div className="rounded-[24px] bg-white/85 p-5 shadow-sm">
-                  <h2 className="text-lg font-bold text-[#592b5a]">
-                    Meal History
-                  </h2>
-
-                  <div className="mt-3 space-y-3">
-                    {mealHistory.length === 0 ? (
-                      <p className="text-sm leading-6 text-[#7e6880]">
-                        Review previous food logs and timestamped meal activity.
-                      </p>
-                    ) : (
-                      mealHistory.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="rounded-2xl bg-[#f8eef6] p-3"
+                <Card title="Insight preview">
+                  <div className="rounded-[24px] bg-[#fcf6fa] p-5 text-sm leading-7 text-[#695c70]">
+                    {dashboardData.topPattern ? (
+                      <>
+                        <p>
+                          {dashboardData.topPattern.symptom} appeared within 12
+                          hours of {dashboardData.topPattern.behaviour.toLowerCase()} on{" "}
+                          {dashboardData.topPattern.count} occasions this week.
+                        </p>
+                        <Link
+                          href="/insights"
+                          className="mt-3 inline-flex text-sm font-semibold text-[#6b2e73]"
                         >
-                          <p className="text-sm font-semibold uppercase tracking-wide text-[#7a4a78]">
-                            {entry.meal_type}
-                          </p>
-                          <p className="mt-1 text-sm text-[#5f4a60]">
-                            {entry.foods_text}
-                          </p>
-                        </div>
-                      ))
+                          View full insights
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          No repeated pattern yet. Continue logging meals,
+                          symptoms, and lifestyle entries to improve future
+                          review.
+                        </p>
+                        <Link
+                          href="/insights"
+                          className="mt-3 inline-flex text-sm font-semibold text-[#6b2e73]"
+                        >
+                          Open insights
+                        </Link>
+                      </>
                     )}
                   </div>
-                </div>
-
-                <div className="rounded-[24px] bg-white/85 p-5 shadow-sm">
-                  <h2 className="text-lg font-bold text-[#592b5a]">
-                    Symptom Logging
-                  </h2>
-
-                  <div className="mt-3 space-y-3">
-                    {symptomHistory.length === 0 ? (
-                      <p className="text-sm leading-6 text-[#7e6880]">
-                        Track fatigue, cravings, bloating, and mood-related
-                        changes.
-                      </p>
-                    ) : (
-                      symptomHistory.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="rounded-2xl bg-[#f8eef6] p-3"
-                        >
-                          <p className="text-sm font-semibold text-[#7a4a78]">
-                            {entry.bloating ? "Bloating" : "Symptom entry"}
-                          </p>
-                          <p className="mt-1 text-sm text-[#5f4a60]">
-                            {entry.notes}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-[24px] bg-white/85 p-5 shadow-sm">
-                  <h2 className="text-lg font-bold text-[#592b5a]">
-                    Lifestyle Logging
-                  </h2>
-
-                  <div className="mt-3 space-y-3">
-                    {lifestyleHistory.length === 0 ? (
-                      <p className="text-sm leading-6 text-[#7e6880]">
-                        Record sleep, water, stress, exercise, and daily
-                        activity.
-                      </p>
-                    ) : (
-                      lifestyleHistory.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="rounded-2xl bg-[#f8eef6] p-3"
-                        >
-                          <p className="text-sm font-semibold text-[#7a4a78]">
-                            {entry.sleep_hours} hours sleep
-                          </p>
-                          <p className="mt-1 text-sm text-[#5f4a60]">
-                            {entry.activity_notes}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-                </div>
+                </Card>
               </section>
             </main>
           </div>
@@ -517,79 +708,4 @@ export default function DashboardPage() {
       </div>
     </ProtectedRoute>
   );
-
-  async function handleMealSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const token = Cookies.get("access_token");
-    if (!token) return;
-
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/meals`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          meal_type: mealType,
-          foods_text: foodsText,
-          image_url: null,
-          notes: "",
-        }),
-      },
-    );
-  }
-
-  async function handleSymptomSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const token = Cookies.get("access_token");
-    if (!token) return;
-
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/symptoms`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          fatigue: fatigue === "Yes",
-          cravings: cravings === "Yes",
-          bloating: false,
-          mood_change: false,
-          notes: "",
-        }),
-      },
-    );
-  }
-
-  async function handleLifestyleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const token = Cookies.get("access_token");
-    if (!token) return;
-
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/v1/logs/lifestyle`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          sleep_hours: Number(sleepHours),
-          exercise_minutes: Number(exerciseMinutes),
-          water_litres: 0,
-          stress_level: "",
-          mood: "",
-          activity_notes: "",
-        }),
-      },
-    );
-  }
 }
