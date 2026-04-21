@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -7,8 +8,12 @@ import yaml
 from ultralytics import YOLO
 
 
-MODEL_PATH = Path("/Users/henrychijioke/myPCOS_model_Training/models/best.pt")
-DATA_YAML_PATH = Path("/Users/henrychijioke/myPCOS_model_Training/data.yaml")
+BASE_DIR = Path(__file__).resolve().parents[2]
+DEFAULT_MODEL_PATH = BASE_DIR / "ml_assets" / "best.pt"
+DEFAULT_DATA_YAML_PATH = BASE_DIR / "ml_assets" / "data.yaml"
+
+MODEL_PATH = Path(os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH)))
+DATA_YAML_PATH = Path(os.getenv("DATA_YAML_PATH", str(DEFAULT_DATA_YAML_PATH)))
 
 
 class FoodDetectorService:
