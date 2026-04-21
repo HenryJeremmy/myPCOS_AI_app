@@ -44,8 +44,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,_rgba(244,114,182,0.24),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.14),_transparent_24%),linear-gradient(180deg,_#fffdfd_0%,_#fbf6f8_35%,_#f6eef4_100%)] text-slate-900">
       <header className="border-b border-[#d8c4d8] bg-[linear-gradient(180deg,#ffffff_0%,#fbf3f8_100%)] shadow-[0_12px_32px_rgba(118,78,116,0.10)] backdrop-blur">
-        <div className="px-4 py-4 sm:px-6 lg:px-8">
-          <nav className="mx-auto max-w-7xl">
+        <div className="px-4 py-4 sm:px-6 xl:px-10 2xl:px-14">
+          <nav className="mx-auto max-w-[1600px]">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(180deg,#5a2858_0%,#6b2e73_100%)] text-white shadow-sm">
@@ -138,14 +138,14 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-        <section className="relative mx-auto grid max-w-7xl gap-14 pb-20 pt-6 lg:grid-cols-2 lg:pb-28 lg:pt-12">
+      <main className="px-4 pb-20 pt-6 sm:px-6 xl:px-10 2xl:px-14">
+        <section className="relative mx-auto grid max-w-[1600px] gap-14 pb-20 pt-6 xl:grid-cols-[0.95fr_1.05fr] lg:pb-28 lg:pt-12">
           <div className="relative z-10">
             {/* <div className="inline-flex rounded-full bg-[#f5e8f4] px-4 py-1 text-sm font-semibold text-[#8a3f88]">
               Built for AI-assisted PCOS self-management
             </div> */}
 
-            <h1 className="mt-6 max-w-2xl text-[2.55rem] font-semibold leading-tight tracking-tight text-[#2e1830] sm:text-[3.2rem] lg:text-[3.35rem]">
+            <h1 className="mt-6 max-w-3xl text-[2.55rem] font-semibold leading-tight tracking-tight text-[#2e1830] sm:text-[3.2rem] lg:text-[3.35rem] 2xl:text-[3.75rem]">
               A calmer way to log meals, symptoms, and lifestyle patterns in{" "}
               <span className="bg-gradient-to-r from-[#8a3fd8] via-[#cf41ca] to-[#e36a95] bg-clip-text text-transparent">
                 one structured workspace
@@ -153,7 +153,7 @@ export default function HomePage() {
               .
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-[#6f5a72]">
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#6f5a72]">
               myPCOS helps users capture AI-assisted meal records, structured
               symptom entries, and daily lifestyle habits, then review repeated
               weekly behavioural patterns through non-diagnostic feedback.
@@ -273,7 +273,7 @@ export default function HomePage() {
 
         <section
           id="features"
-          className="mx-auto mt-2 max-w-7xl rounded-[34px] border border-white/65 bg-white/62 px-6 py-10 shadow-[0_18px_50px_rgba(118,78,116,0.08)] backdrop-blur sm:px-8 lg:px-10"
+          className="mx-auto mt-2 max-w-[1600px] rounded-[34px] border border-white/65 bg-white/62 px-6 py-10 shadow-[0_18px_50px_rgba(118,78,116,0.08)] backdrop-blur sm:px-8 xl:px-10 2xl:px-12"
         >
           <div className="mb-8 max-w-3xl">
             <p className="text-sm uppercase tracking-[0.18em] text-[#946183]">
@@ -310,7 +310,7 @@ export default function HomePage() {
 
         <section
           id="workflow"
-          className="mx-auto mt-8 max-w-7xl rounded-[34px] bg-white/78 px-6 py-10 shadow-[0_18px_50px_rgba(118,78,116,0.08)] sm:px-8 lg:px-10"
+          className="mx-auto mt-8 max-w-[1600px] rounded-[34px] bg-white/78 px-6 py-10 shadow-[0_18px_50px_rgba(118,78,116,0.08)] sm:px-8 xl:px-10 2xl:px-12"
         >
           <div className="mb-8 max-w-3xl">
             <p className="text-sm uppercase tracking-[0.18em] text-[#946183]">
@@ -356,7 +356,7 @@ export default function HomePage() {
 
         <section
           id="insights"
-          className="mx-auto mt-8 max-w-7xl rounded-[34px] bg-[linear-gradient(135deg,#fff8fb_0%,#f5edf7_100%)] px-6 py-10 shadow-[0_18px_50px_rgba(118,78,116,0.08)] sm:px-8 lg:px-10"
+          className="mx-auto mt-8 max-w-[1600px] rounded-[34px] bg-[linear-gradient(135deg,#fff8fb_0%,#f5edf7_100%)] px-6 py-10 shadow-[0_18px_50px_rgba(118,78,116,0.08)] sm:px-8 xl:px-10 2xl:px-12"
         >
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <div className="rounded-[2rem] bg-[#f8eef5] p-8 shadow-sm">
@@ -422,7 +422,7 @@ export default function HomePage() {
         id="faq"
         className="border-t border-white/10 bg-gradient-to-br from-[#4a2348] via-[#6f2d72] to-[#9a4a86] text-white"
       >
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.15fr_0.85fr_0.85fr_0.85fr] lg:px-8">
+        <div className="mx-auto grid max-w-[1600px] gap-10 px-4 py-14 sm:px-6 xl:px-10 2xl:px-14 lg:grid-cols-[1.15fr_0.85fr_0.85fr_0.85fr]">
           <div>
             <Link href="/" className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 text-white">

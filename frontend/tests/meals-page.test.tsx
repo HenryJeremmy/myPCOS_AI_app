@@ -133,6 +133,21 @@ describe('meals page', () => {
     expect(screen.getByDisplayValue('Rice')).toBeInTheDocument();
   });
 
+  it('allows the confirmed foods list to be edited manually', () => {
+    render(<MealsPage />);
+
+    fireEvent.change(screen.getByLabelText(/confirmed foods/i), {
+      target: { value: 'Rice, Green salad, Chicken' },
+    });
+
+    expect(
+      screen.getByDisplayValue('Rice, Green salad, Chicken')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/you can edit this list manually if the ai misses part of the meal/i)
+    ).toBeInTheDocument();
+  });
+
   it('allows a detected food to be removed', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -224,6 +239,9 @@ describe('meals page', () => {
           foods_text: 'Rice',
           image_url: null,
           notes: 'Felt very hungry before eating.',
+          glycaemic_band: 'high',
+          metabolic_summary:
+            'Tagged as high glycaemic impact. Metabolic profile: refined_carb.',
           created_at: '2026-04-08T01:00:00Z',
         }),
       });
@@ -282,11 +300,91 @@ describe('meals page', () => {
     expect(
       await screen.findByText(/meal entry saved successfully/i)
     ).toBeInTheDocument();
+    expect(screen.getByText(/glycaemic band/i)).toBeInTheDocument();
+    expect(screen.getByText(/^high$/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/tagged as high glycaemic impact/i)
+    ).toBeInTheDocument();
 
     expect(screen.getByLabelText(/meal type/i)).toHaveValue('');
     expect(screen.getByLabelText(/meal time/i)).toHaveValue('');
     expect(screen.getByLabelText(/notes/i)).toHaveValue('');
     expect(screen.getByLabelText(/confirmed foods/i)).toHaveValue('');
     expect(screen.getByText(/no file selected/i)).toBeInTheDocument();
+  });
+
+  it('saves manually added foods together with AI-confirmed foods', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          filename: 'meal.jpg',
+          content_type: 'image/jpeg',
+          total_detections: 1,
+          detections: [
+            {
+              class_id: 0,
+              label: 'Rice',
+              confidence: 0.92,
+              bbox: { x1: 10, y1: 20, x2: 200, y2: 240 },
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 2,
+          user_id: 1,
+          meal_type: 'Lunch',
+          foods_text: 'Rice, Green salad',
+          image_url: null,
+          notes: '',
+          created_at: '2026-04-08T01:00:00Z',
+        }),
+      });
+
+    vi.stubGlobal('fetch', mockFetch);
+
+    render(<MealsPage />);
+
+    const file = new File(['meal-image'], 'meal.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText(/meal image/i), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /run ai prediction/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /confirm rice/i })
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /confirm rice/i }));
+    fireEvent.change(screen.getByLabelText(/confirmed foods/i), {
+      target: { value: 'Rice, Green salad' },
+    });
+    fireEvent.change(screen.getByLabelText(/meal type/i), {
+      target: { value: 'Lunch' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /save meal entry/i }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('/api/v1/logs/meals'),
+        expect.objectContaining({
+          body: JSON.stringify({
+            meal_type: 'Lunch',
+            foods_text: 'Rice, Green salad',
+            image_url: null,
+            notes: '',
+            meal_time: null,
+          }),
+        })
+      );
+    });
   });
 });

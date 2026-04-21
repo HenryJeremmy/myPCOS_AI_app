@@ -21,6 +21,13 @@ vi.mock("@/lib/auth", () => ({
 import { useAuth } from "@/lib/auth";
 import DashboardPage from "@/app/dashboard/page";
 
+function isoDaysAgo(daysAgo: number, hour: number, minute = 0) {
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString();
+}
+
 function mockDashboardFetch({
   meals = [],
   symptoms = [],
@@ -255,7 +262,7 @@ describe("dashboard page", () => {
           meal_time: "19:00",
           glycaemic_band: "high",
           metabolic_summary: "",
-          created_at: "2026-04-07T19:00:00Z",
+          created_at: isoDaysAgo(2, 19),
         },
         {
           id: 2,
@@ -265,7 +272,7 @@ describe("dashboard page", () => {
           meal_time: "19:00",
           glycaemic_band: "high",
           metabolic_summary: "",
-          created_at: "2026-04-08T19:00:00Z",
+          created_at: isoDaysAgo(1, 19),
         },
         {
           id: 3,
@@ -275,7 +282,7 @@ describe("dashboard page", () => {
           meal_time: "19:00",
           glycaemic_band: "high",
           metabolic_summary: "",
-          created_at: "2026-04-09T19:00:00Z",
+          created_at: isoDaysAgo(0, 19),
         },
       ],
       symptoms: [
@@ -287,7 +294,7 @@ describe("dashboard page", () => {
           mood_change: false,
           notes: "",
           symptom_time: "21:00",
-          created_at: "2026-04-07T21:00:00Z",
+          created_at: isoDaysAgo(2, 21),
         },
         {
           id: 12,
@@ -297,7 +304,7 @@ describe("dashboard page", () => {
           mood_change: false,
           notes: "",
           symptom_time: "21:00",
-          created_at: "2026-04-08T21:00:00Z",
+          created_at: isoDaysAgo(1, 21),
         },
         {
           id: 13,
@@ -307,7 +314,7 @@ describe("dashboard page", () => {
           mood_change: false,
           notes: "",
           symptom_time: "21:00",
-          created_at: "2026-04-09T21:00:00Z",
+          created_at: isoDaysAgo(0, 21),
         },
       ],
       lifestyle: [],
@@ -321,7 +328,9 @@ describe("dashboard page", () => {
     });
 
     expect(
-      screen.getByText(/cravings appeared within 12 hours of high glycaemic meals/i),
+      screen.getByText(
+        /cravings appeared within 12 hours of high glycaemic meals on 3 occasions this week/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view full insights/i })).toBeInTheDocument();
   });

@@ -2,6 +2,8 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { HeartPulse, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { OTPInput } from '@/components/otp-input';
 
@@ -62,71 +64,97 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-lg shadow-purple-200/50 p-8 border border-pink-100">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              Verify Email
-            </h1>
-            <p className="text-slate-600 text-sm">
-              Enter the 5-digit code sent to <span className="font-semibold">{email}</span>
-            </p>
-          </div>
-
-          {/* OTP Input */}
-          <div className="mb-8">
-            <OTPInput
-              length={5}
-              value={otp}
-              onChange={setOtp}
-              onComplete={handleVerify}
-            />
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 rounded-lg bg-rose-50 border border-rose-200 p-4">
-              <p className="text-sm text-rose-700 font-medium">{error}</p>
+    <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#fcf7fa_0%,#f4ebf1_42%,#ece2ee_100%)] px-4 py-8 sm:px-6 sm:py-12 flex items-center justify-center">
+      <div className="w-full max-w-6xl">
+        <div className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#fcf7fa_0%,#f4ebf1_42%,#ece2ee_100%)] shadow-2xl ring-1 ring-white/50">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(207,65,202,0.16),_transparent_55%)]" />
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="relative hidden items-center justify-center p-10 md:flex">
+              <div className="relative w-full max-w-xs rounded-2xl bg-white/76 p-6 shadow-xl backdrop-blur">
+                <Link
+                  href="/"
+                  className="mb-4 flex items-center justify-center gap-2 text-3xl font-bold tracking-wide text-[#4f2550]"
+                >
+                  <HeartPulse className="h-8 w-8 text-[#8a3fd8]" />
+                  myPCOS
+                </Link>
+                <p className="text-center text-sm text-[#6f5a72]">
+                  Confirm your email to activate meal logging, symptom tracking,
+                  lifestyle review, and insight generation.
+                </p>
+                <div className="mt-6 rounded-xl bg-[linear-gradient(135deg,#fff6fa_0%,#f5ebf8_100%)] px-4 py-5">
+                  <div className="rounded-xl bg-[linear-gradient(135deg,#d98bc1_0%,#b678d4_100%)] p-5 text-white">
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-white/80">
+                      Verification step
+                    </p>
+                    <p className="mt-3 text-lg font-semibold">
+                      Secure your account before continuing into the workspace.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Success Message */}
-          {successMessage && (
-            <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4">
-              <p className="text-sm text-green-700 font-medium">{successMessage}</p>
+            <div className="relative px-6 py-10 sm:px-10 md:px-12 lg:px-14">
+              <div className="mb-8 text-center">
+                <Link
+                  href="/"
+                  aria-label="Go to landing page"
+                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/70 text-[#7d45bf] shadow-md ring-1 ring-white/70 transition hover:bg-white"
+                >
+                  <HeartPulse size={28} />
+                </Link>
+                <h1 className="text-3xl font-bold text-[#4f2550]">Verify Email</h1>
+                <p className="mt-2 text-sm text-[#6f5a72]">
+                  Enter the 5-digit code sent to <span className="font-semibold">{email}</span>
+                </p>
+              </div>
+
+              <div className="mb-8">
+                <OTPInput
+                  length={5}
+                  value={otp}
+                  onChange={setOtp}
+                  onComplete={handleVerify}
+                />
+              </div>
+
+              {error && (
+                <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  {successMessage}
+                </div>
+              )}
+
+              <button
+                onClick={handleVerify}
+                disabled={isLoading || otp.length !== 5}
+                className="w-full rounded-xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-3 font-semibold text-white shadow-lg shadow-fuchsia-300/40 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoading ? 'Verifying...' : 'Verify Email'}
+              </button>
+
+              <div className="mt-6 border-t border-[#ecdbe8] pt-6 text-center">
+                <p className="mb-3 text-sm text-[#6f5a72]">Didn&apos;t receive the code?</p>
+                <button
+                  onClick={handleResend}
+                  disabled={isResending || resendCooldown > 0}
+                  className="text-sm font-semibold text-[#8a3fd8] transition hover:text-[#6b2e73] disabled:cursor-not-allowed disabled:text-[#a497ad]"
+                >
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                </button>
+              </div>
+
+              <div className="mt-6 flex items-center justify-center gap-2 border-t border-[#ecdbe8] pt-6 text-center text-xs text-[#8d7391]">
+                <CheckCircle2 size={16} />
+                <span>Check your email, including spam, for the verification code.</span>
+              </div>
             </div>
-          )}
-
-          {/* Verify Button */}
-          <button
-            onClick={handleVerify}
-            disabled={isLoading || otp.length !== 5}
-            className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-rose-500 text-white font-semibold hover:from-purple-600 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            {isLoading ? 'Verifying...' : 'Verify Email'}
-          </button>
-
-          {/* Resend Code */}
-          <div className="mt-6 text-center border-t border-slate-100 pt-6">
-            <p className="text-sm text-slate-600 mb-3">Didn't receive the code?</p>
-            <button
-              onClick={handleResend}
-              disabled={isResending || resendCooldown > 0}
-              className="text-purple-600 hover:text-purple-700 font-semibold text-sm disabled:text-slate-400 disabled:cursor-not-allowed transition"
-            >
-              {resendCooldown > 0
-                ? `Resend in ${resendCooldown}s`
-                : 'Resend Code'}
-            </button>
-          </div>
-
-          {/* Additional Info */}
-          <div className="mt-6 pt-6 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-500">
-              Check your email (including spam folder) for the verification code
-            </p>
           </div>
         </div>
       </div>

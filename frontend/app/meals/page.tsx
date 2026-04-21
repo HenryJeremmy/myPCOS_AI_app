@@ -134,6 +134,27 @@ type Detection = {
   };
 };
 
+type SavedMealClassification = {
+  glycaemicBand: string | null;
+  metabolicSummary: string | null;
+  foodsText: string;
+};
+
+function parseConfirmedFoods(value: string) {
+  return Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function formatConfirmedFoods(foods: string[]) {
+  return foods.join(", ");
+}
+
 export default function MealsPage() {
   const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -143,12 +164,15 @@ export default function MealsPage() {
   const [uploadError, setUploadError] = useState("");
   const [detections, setDetections] = useState<Detection[]>([]);
   const [confirmedFoods, setConfirmedFoods] = useState<string[]>([]);
+  const [confirmedFoodsInput, setConfirmedFoodsInput] = useState("");
   const [mealType, setMealType] = useState("");
   const [mealTime, setMealTime] = useState("");
   const [notes, setNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [savedClassification, setSavedClassification] =
+    useState<SavedMealClassification | null>(null);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -171,6 +195,7 @@ export default function MealsPage() {
     setUploadError("");
     setSaveMessage("");
     setSaveError("");
+    setSavedClassification(null);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -193,13 +218,19 @@ export default function MealsPage() {
 
     setDetections(Array.isArray(data.detections) ? data.detections : []);
     setConfirmedFoods([]);
+    setConfirmedFoodsInput("");
     setIsUploading(false);
   }
 
   function handleConfirmFood(label: string) {
-    setConfirmedFoods((current) =>
-      current.includes(label) ? current : [...current, label],
-    );
+    setConfirmedFoods((current) => {
+      const normalisedCurrent = current.map((item) => item.toLowerCase());
+      const nextFoods = normalisedCurrent.includes(label.toLowerCase())
+        ? current
+        : [...current, label];
+      setConfirmedFoodsInput(formatConfirmedFoods(nextFoods));
+      return nextFoods;
+    });
   }
 
   function handleRemovePrediction(label: string) {
@@ -212,6 +243,7 @@ export default function MealsPage() {
     setUploadError("");
     setDetections([]);
     setConfirmedFoods([]);
+    setConfirmedFoodsInput("");
     setMealType("");
     setMealTime("");
     setNotes("");
@@ -229,7 +261,9 @@ export default function MealsPage() {
       return;
     }
 
-    if (confirmedFoods.length === 0) {
+    const parsedConfirmedFoods = parseConfirmedFoods(confirmedFoodsInput);
+
+    if (parsedConfirmedFoods.length === 0) {
       setSaveError("Please confirm at least one food before saving.");
       return;
     }
@@ -248,7 +282,7 @@ export default function MealsPage() {
         },
         body: JSON.stringify({
           meal_type: mealType,
-          foods_text: confirmedFoods.join(", "),
+          foods_text: parsedConfirmedFoods.join(", "),
           image_url: null,
           notes,
           meal_time: mealTime || null,
@@ -264,6 +298,11 @@ export default function MealsPage() {
       return;
     }
 
+    setSavedClassification({
+      glycaemicBand: data.glycaemic_band ?? null,
+      metabolicSummary: data.metabolic_summary ?? null,
+      foodsText: data.foods_text ?? parsedConfirmedFoods.join(", "),
+    });
     setSaveMessage("Meal entry saved successfully.");
     resetMealForm();
     setIsSaving(false);
@@ -512,11 +551,18 @@ export default function MealsPage() {
                     <input
                       id="confirmedFoods"
                       type="text"
-                      value={confirmedFoods.join(", ")}
-                      readOnly
-                      placeholder="No foods confirmed yet"
+                      value={confirmedFoodsInput}
+                      onChange={(e) => {
+                        setConfirmedFoodsInput(e.target.value);
+                        setConfirmedFoods(parseConfirmedFoods(e.target.value));
+                      }}
+                      placeholder="Rice, chicken, green salad"
                       className="mt-3 w-full rounded-2xl border border-[#ecd8ea] bg-white px-4 py-3 text-sm text-[#5f2f60] outline-none placeholder:text-[#9b809c]"
                     />
+                    <p className="mt-2 text-xs leading-5 text-[#8b748d]">
+                      You can edit this list manually if the AI misses part of
+                      the meal. Separate foods with commas.
+                    </p>
                   </div>
 
                   <div className="rounded-[22px] bg-[#fcf6fa] p-4">
@@ -556,18 +602,45 @@ export default function MealsPage() {
 
               <Card title="Metabolic classification">
                 <div className="space-y-3">
-                  {[
-                    "Glycaemic impact placeholder",
-                    "Meal balance summary placeholder",
-                    "Nutrition notes placeholder",
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-2xl bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] px-4 py-4 text-sm text-[#695c70]"
-                    >
-                      {item}
-                    </div>
-                  ))}
+                  {savedClassification ? (
+                    <>
+                      <div className="rounded-2xl bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] px-4 py-4 text-sm text-[#695c70]">
+                        <p className="font-semibold text-[#592b5a]">
+                          Glycaemic band
+                        </p>
+                        <p className="mt-1 capitalize">
+                          {savedClassification.glycaemicBand ?? "Unknown"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] px-4 py-4 text-sm text-[#695c70]">
+                        <p className="font-semibold text-[#592b5a]">
+                          Confirmed foods used for classification
+                        </p>
+                        <p className="mt-1">
+                          {savedClassification.foodsText}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] px-4 py-4 text-sm text-[#695c70]">
+                        <p className="font-semibold text-[#592b5a]">
+                          Metabolic summary
+                        </p>
+                        <p className="mt-1">
+                          {savedClassification.metabolicSummary ??
+                            "No metabolic summary available."}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="rounded-2xl bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] px-4 py-4 text-sm text-[#695c70]">
+                        Save a meal entry to see the glycaemic band here.
+                      </div>
+                      <div className="rounded-2xl bg-[linear-gradient(135deg,#fff7fa_0%,#f4edf7_100%)] px-4 py-4 text-sm text-[#695c70]">
+                        The metabolic summary will be generated from the final
+                        confirmed foods you save.
+                      </div>
+                    </>
+                  )}
                 </div>
               </Card>
             </section>
