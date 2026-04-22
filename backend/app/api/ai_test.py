@@ -10,13 +10,13 @@ TEST_IMAGE_PATH = "/Users/henrychijioke/myPCOS_model_Training/test_images/1_66.j
 
 @router.get("/predict")
 def predict_test_image():
-    if not food_detector.is_available:
+    try:
+        detections = food_detector.predict(TEST_IMAGE_PATH)
+    except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Food detection model is not available in this environment.",
-        )
-
-    detections = food_detector.predict(TEST_IMAGE_PATH)
+            detail=str(exc),
+        ) from exc
 
     return {
         "message": "Test prediction completed successfully",

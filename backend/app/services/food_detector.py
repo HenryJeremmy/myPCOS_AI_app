@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from ultralytics import YOLO
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -20,23 +19,30 @@ class FoodDetectorService:
     def __init__(self, model_path: Path, data_yaml_path: Path) -> None:
         self.model_path = model_path
         self.data_yaml_path = data_yaml_path
-        self.model: YOLO | None = None
+        self.model: Any | None = None
         self.class_names = self._load_class_names()
-        self.is_available = False
+        self.is_available = self.model_path.exists()
         self.load_error: str | None = None
 
-        self._load_model()
-
     def _load_model(self) -> None:
+        if self.model is not None:
+            return
+
         if not self.model_path.exists():
             self.load_error = f"Model weights not found at {self.model_path}"
+            self.is_available = False
             return
 
         try:
+            # Import ultralytics lazily so app startup does not pay the memory cost
+            # unless an AI endpoint is actually used.
+            from ultralytics import YOLO
+
             self.model = YOLO(str(self.model_path))
             self.is_available = True
         except Exception as exc:
             self.load_error = str(exc)
+            self.is_available = False
 
     def _load_class_names(self) -> dict[int, str]:
         if not self.data_yaml_path.exists():
@@ -49,6 +55,8 @@ class FoodDetectorService:
         return {int(class_id): str(name) for class_id, name in names.items()}
 
     def predict(self, image_path: str, confidence_threshold: float = 0.25) -> list[dict[str, Any]]:
+        self._load_model()
+
         if self.model is None:
             raise RuntimeError(self.load_error or "Food detector model is unavailable.")
 

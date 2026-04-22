@@ -60,4 +60,4 @@ httpx==0.28.1
 pwdlib==0.3.0
 argon2-cffi==25.1.0
 argon2-cffi-bindings==25.1.0
-
+cryptography==46.0.7
