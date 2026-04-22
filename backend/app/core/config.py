@@ -22,14 +22,17 @@ class Settings:
     SMTP_EMAIL = os.getenv("SMTP_EMAIL", "your-email@gmail.com")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-app-password")
     
+   
     # CORS
     CORS_ORIGINS = [
-        origin.strip() 
-        for origin in os.getenv(
-            "CORS_ORIGINS", "http://localhost:3000,http://,http://127.0.0.1:3000",)
-        .split(",") 
-        if origin.strip()
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    ).split(",")
+    if origin.strip()
     ]
+
 
     @property
     def app_name(self):
