@@ -163,7 +163,6 @@ export default function MealsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [detections, setDetections] = useState<Detection[]>([]);
-  const [confirmedFoods, setConfirmedFoods] = useState<string[]>([]);
   const [confirmedFoodsInput, setConfirmedFoodsInput] = useState("");
   const [mealType, setMealType] = useState("");
   const [mealTime, setMealTime] = useState("");
@@ -175,18 +174,12 @@ export default function MealsPage() {
     useState<SavedMealClassification | null>(null);
 
   useEffect(() => {
-    if (!selectedFile) {
-      setPreviewUrl("");
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setPreviewUrl(objectUrl);
-
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
-  }, [selectedFile]);
+  }, [previewUrl]);
 
   async function handleRunPrediction() {
     if (!selectedFile) return;
@@ -211,26 +204,31 @@ export default function MealsPage() {
     const data = await response.json();
 
     if (!response.ok) {
-      setUploadError(data.detail ?? "Unable to run AI prediction.");
+      const detail =
+        typeof data.detail === "string"
+          ? data.detail
+          : "Unable to run AI prediction.";
+      const friendlyMessage = detail.toLowerCase().includes("not enabled")
+        ? "AI meal prediction is not available right now. You can still enter the foods manually and save the meal."
+        : detail;
+
+      setUploadError(friendlyMessage);
       setIsUploading(false);
       return;
     }
 
     setDetections(Array.isArray(data.detections) ? data.detections : []);
-    setConfirmedFoods([]);
     setConfirmedFoodsInput("");
     setIsUploading(false);
   }
 
   function handleConfirmFood(label: string) {
-    setConfirmedFoods((current) => {
-      const normalisedCurrent = current.map((item) => item.toLowerCase());
-      const nextFoods = normalisedCurrent.includes(label.toLowerCase())
-        ? current
-        : [...current, label];
-      setConfirmedFoodsInput(formatConfirmedFoods(nextFoods));
-      return nextFoods;
-    });
+    const current = parseConfirmedFoods(confirmedFoodsInput);
+    const normalisedCurrent = current.map((item) => item.toLowerCase());
+    const nextFoods = normalisedCurrent.includes(label.toLowerCase())
+      ? current
+      : [...current, label];
+    setConfirmedFoodsInput(formatConfirmedFoods(nextFoods));
   }
 
   function handleRemovePrediction(label: string) {
@@ -239,10 +237,12 @@ export default function MealsPage() {
 
   function resetMealForm() {
     setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setPreviewUrl("");
     setUploadError("");
     setDetections([]);
-    setConfirmedFoods([]);
     setConfirmedFoodsInput("");
     setMealType("");
     setMealTime("");
@@ -406,7 +406,11 @@ export default function MealsPage() {
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0] ?? null;
+                      if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl);
+                      }
                       setSelectedFile(file);
+                      setPreviewUrl(file ? URL.createObjectURL(file) : "");
                       setSaveMessage("");
                       setSaveError("");
                     }}
@@ -554,7 +558,6 @@ export default function MealsPage() {
                       value={confirmedFoodsInput}
                       onChange={(e) => {
                         setConfirmedFoodsInput(e.target.value);
-                        setConfirmedFoods(parseConfirmedFoods(e.target.value));
                       }}
                       placeholder="Rice, chicken, green salad"
                       className="mt-3 w-full rounded-2xl border border-[#ecd8ea] bg-white px-4 py-3 text-sm text-[#5f2f60] outline-none placeholder:text-[#9b809c]"

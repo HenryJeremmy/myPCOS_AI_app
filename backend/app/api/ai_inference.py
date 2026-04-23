@@ -25,9 +25,7 @@ async def predict_uploaded_image(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
-                "AI inference is disabled on this backend instance to keep the "
-                "core app stable. Enable AI_INFERENCE_ENABLED only on an "
-                "instance with enough memory for the model."
+                "AI meal prediction is not enabled on this backend deployment."
             ),
         )
 

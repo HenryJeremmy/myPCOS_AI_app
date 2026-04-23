@@ -31,5 +31,6 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: .
+          DEMO_OTP_ENABLED: "true"
         run: |
           pytest -q

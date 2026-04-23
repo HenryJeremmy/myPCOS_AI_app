@@ -21,6 +21,12 @@ class Settings:
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_EMAIL = os.getenv("SMTP_EMAIL", "your-email@gmail.com")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-app-password")
+    DEMO_OTP_ENABLED = os.getenv("DEMO_OTP_ENABLED", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
     # AI inference can exceed small hosted instance memory limits.
     AI_INFERENCE_ENABLED = os.getenv("AI_INFERENCE_ENABLED", "false").lower() in {
@@ -81,6 +87,10 @@ class Settings:
     @property
     def smtp_password(self):
         return self.SMTP_PASSWORD
+
+    @property
+    def demo_otp_enabled(self):
+        return self.DEMO_OTP_ENABLED
 
     @property
     def ai_inference_enabled(self):

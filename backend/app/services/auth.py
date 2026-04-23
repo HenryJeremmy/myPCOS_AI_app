@@ -35,6 +35,10 @@ def generate_otp() -> str:
 def send_otp_email(email: str, otp_code: str):
     """Send OTP to user's email using SMTP"""
     try:
+        if settings.demo_otp_enabled:
+            print(f"DEMO OTP for {email}: {otp_code}")
+            return True
+
         sender_email = settings.smtp_email
         sender_password = settings.smtp_password
         smtp_server = settings.smtp_server
@@ -82,10 +86,16 @@ The myPCOS Team
         message.attach(part1)
         message.attach(part2)
 
-        # Send email
-        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, email, message.as_string())
+        # Send email. Gmail supports SSL on 465 and STARTTLS on 587.
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=15) as server:
+                server.login(sender_email, sender_password)
+                server.sendmail(sender_email, email, message.as_string())
+        else:
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.sendmail(sender_email, email, message.as_string())
 
         return True
     except Exception as e:
@@ -93,7 +103,7 @@ The myPCOS Team
         return False
 
 
-def create_user(db: Session, user_in: UserCreate) -> User:
+def create_user(db: Session, user_in: UserCreate) -> tuple[User, bool]:
     """Create a new unverified user and send OTP"""
     otp_code = generate_otp()
     otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -113,9 +123,9 @@ def create_user(db: Session, user_in: UserCreate) -> User:
     db.refresh(db_user)
 
     # Send OTP to email
-    send_otp_email(user_in.email, otp_code)
+    email_sent = send_otp_email(user_in.email, otp_code)
 
-    return db_user
+    return db_user, email_sent
 
 
 def verify_otp(db: Session, email: str, otp_code: str) -> bool:

@@ -57,10 +57,20 @@ def signup(user_in: UserCreate, db: Session = Depends(get_db)):
     if get_user_by_email(db, user_in.email):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     
-    create_user(db, user_in)
+    user, email_sent = create_user(db, user_in)
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Account created, but OTP email could not be sent. Please try resend OTP shortly.",
+        )
+
+    message = "Signup successful. Please verify your email with the OTP sent to your inbox."
+    if settings.demo_otp_enabled:
+        message = f"Signup successful. Demo OTP: {user.otp_code}"
+
     return {
         "email": user_in.email,
-        "message": "Signup successful. Please verify your email with the OTP sent to your inbox."
+        "message": message,
     }
 
 
@@ -73,9 +83,19 @@ def verify_email(otp_data: OTPVerify, db: Session = Depends(get_db)):
 
 @router.post("/resend-otp", response_model=dict)
 def resend_otp_endpoint(otp_data: OTPResend, db: Session = Depends(get_db)):
+    user = get_user_by_email(db, otp_data.email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+
     if resend_otp(db, otp_data.email):
+        if settings.demo_otp_enabled:
+            db.refresh(user)
+            return {"message": f"Demo OTP: {user.otp_code}"}
         return {"message": "OTP resent to your email"}
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="OTP email could not be sent. Please try again shortly.",
+    )
 
 
 @router.post("/login", response_model=Token)
