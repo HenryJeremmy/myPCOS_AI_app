@@ -7,9 +7,9 @@ from typing import Any
 import yaml
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-DEFAULT_MODEL_PATH = BASE_DIR / "ml_assets" / "best.pt"
-DEFAULT_DATA_YAML_PATH = BASE_DIR / "ml_assets" / "data.yaml"
+APP_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_MODEL_PATH = APP_DIR / "ml_assets" / "best.pt"
+DEFAULT_DATA_YAML_PATH = APP_DIR / "ml_assets" / "data.yaml"
 
 MODEL_PATH = Path(os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH)))
 DATA_YAML_PATH = Path(os.getenv("DATA_YAML_PATH", str(DEFAULT_DATA_YAML_PATH)))
