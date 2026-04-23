@@ -12,13 +12,10 @@ pydantic==2.12.5
 pwdlib==0.3.0
 argon2-cffi==25.1.0
 argon2-cffi-bindings==25.1.0
-
-# AI inference dependencies. These are intended for a Railway Hobby-or-larger
-# backend instance with AI_INFERENCE_ENABLED=true.
 PyYAML==6.0.3
 pillow==12.1.1
 pillow-heif==1.3.0
-numpy==2.4.3
+numpy==2.2.6
 opencv-python-headless==4.12.0.88
 torch==2.11.0
 torchvision==0.26.0
