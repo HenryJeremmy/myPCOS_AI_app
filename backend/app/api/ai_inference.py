@@ -6,7 +6,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 
-from app.services.food_detector import food_detector
+from app.core.config import settings
 
 register_heif_opener()
 
@@ -25,6 +25,16 @@ MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 @router.post("/predict")
 async def predict_uploaded_image(file: UploadFile = File(...)):
+    if not settings.ai_inference_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "AI inference is disabled on this backend instance to keep the "
+                "core app stable. Enable AI_INFERENCE_ENABLED only on an "
+                "instance with enough memory for the model."
+            ),
+        )
+
     file_suffix = Path(file.filename or "upload.jpg").suffix.lower()
 
     if (
@@ -58,6 +68,8 @@ async def predict_uploaded_image(file: UploadFile = File(...)):
         temp_file_path = temp_file.name
 
     try:
+        from app.services.food_detector import food_detector
+
         detections = food_detector.predict(temp_file_path)
     except RuntimeError as exc:
         raise HTTPException(

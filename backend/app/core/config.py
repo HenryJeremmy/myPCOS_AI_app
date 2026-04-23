@@ -21,6 +21,14 @@ class Settings:
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_EMAIL = os.getenv("SMTP_EMAIL", "your-email@gmail.com")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-app-password")
+
+    # AI inference can exceed small hosted instance memory limits.
+    AI_INFERENCE_ENABLED = os.getenv("AI_INFERENCE_ENABLED", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     
    
     # CORS
@@ -73,6 +81,10 @@ class Settings:
     @property
     def smtp_password(self):
         return self.SMTP_PASSWORD
+
+    @property
+    def ai_inference_enabled(self):
+        return self.AI_INFERENCE_ENABLED
 
     @property
     def allowed_origins(self):
