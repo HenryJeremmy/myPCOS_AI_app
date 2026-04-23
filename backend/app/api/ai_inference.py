@@ -3,12 +3,8 @@ from pathlib import Path
 import tempfile
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
-from PIL import Image, UnidentifiedImageError
-from pillow_heif import register_heif_opener
 
 from app.core.config import settings
-
-register_heif_opener()
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -53,6 +49,17 @@ async def predict_uploaded_image(file: UploadFile = File(...)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File is too large. Maximum allowed size is 5MB.",
         )
+
+    try:
+        from PIL import Image, UnidentifiedImageError
+        from pillow_heif import register_heif_opener
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Image processing dependencies are not installed on this backend instance.",
+        ) from exc
+
+    register_heif_opener()
 
     try:
         image = Image.open(BytesIO(contents))
