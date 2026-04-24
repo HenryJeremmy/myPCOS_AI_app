@@ -17,8 +17,6 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [otpCode, setOtpCode] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
@@ -44,7 +42,6 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
         onSuccess?.();
       } else {
         const result = await signup(email, password, firstName, lastName);
-        setIsOtpSent(true);
         router.push(`/verify-email?email=${encodeURIComponent(result.email)}`);
       }
     } catch (err) {
@@ -186,19 +183,6 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                       {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                </div>
-              )}
-
-              {isOtpSent && (
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#5a2858]">OTP Code</label>
-                  <input
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    type="text"
-                    placeholder="123456"
-                    className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
-                  />
                 </div>
               )}
 
