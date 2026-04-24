@@ -10,3 +10,4 @@ def test_health_check(client):
     assert data["status"] == "ok"
     assert data["service"] == "mypcos-backend"
     assert "ai_inference_enabled" in data
+    assert "email_provider" in data

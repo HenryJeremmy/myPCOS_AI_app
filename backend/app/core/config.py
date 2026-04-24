@@ -17,10 +17,14 @@ class Settings:
     JWT_ALGORITHM = "HS256"
     
     # SMTP Email Configuration
+    EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "smtp").lower()
     SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_EMAIL = os.getenv("SMTP_EMAIL", "your-email@gmail.com")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-app-password")
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+    RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
+    RESEND_REPLY_TO = os.getenv("RESEND_REPLY_TO", "")
     DEMO_OTP_ENABLED = os.getenv("DEMO_OTP_ENABLED", "false").lower() in {
         "1",
         "true",
@@ -77,6 +81,10 @@ class Settings:
         return self.SMTP_SERVER
 
     @property
+    def email_provider(self):
+        return self.EMAIL_PROVIDER
+
+    @property
     def smtp_port(self):
         return self.SMTP_PORT
 
@@ -87,6 +95,18 @@ class Settings:
     @property
     def smtp_password(self):
         return self.SMTP_PASSWORD
+
+    @property
+    def resend_api_key(self):
+        return self.RESEND_API_KEY
+
+    @property
+    def resend_from_email(self):
+        return self.RESEND_FROM_EMAIL
+
+    @property
+    def resend_reply_to(self):
+        return self.RESEND_REPLY_TO
 
     @property
     def demo_otp_enabled(self):

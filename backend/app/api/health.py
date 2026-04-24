@@ -11,4 +11,5 @@ def health_check() -> dict[str, str | bool]:
         "status": "ok",
         "service": "mypcos-backend",
         "ai_inference_enabled": settings.ai_inference_enabled,
+        "email_provider": settings.email_provider,
     }

@@ -1,6 +1,7 @@
 import random
 import string
 from datetime import datetime, timezone, timedelta
+from typing import Any
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.meal_entry import MealEntry
@@ -13,6 +14,7 @@ from jose import jwt
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import httpx
 
 password_hash = PasswordHash.recommended()
 
@@ -32,26 +34,8 @@ def generate_otp() -> str:
     return ''.join(random.choices(string.digits, k=5))
 
 
-def send_otp_email(email: str, otp_code: str):
-    """Send OTP to user's email using SMTP"""
-    try:
-        if settings.demo_otp_enabled:
-            print(f"DEMO OTP for {email}: {otp_code}")
-            return True
-
-        sender_email = settings.smtp_email
-        sender_password = settings.smtp_password
-        smtp_server = settings.smtp_server
-        smtp_port = settings.smtp_port
-
-        # Create message
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Your myPCOS Verification Code"
-        message["From"] = sender_email
-        message["To"] = email
-
-        # Email body
-        text = f"""
+def build_otp_email(email: str, otp_code: str) -> tuple[str, str]:
+    text = f"""
 Hello,
 
 Your myPCOS verification code is:
@@ -62,9 +46,9 @@ This code expires in 10 minutes.
 
 Best regards,
 The myPCOS Team
-        """
+    """
 
-        html = f"""
+    html = f"""
 <html>
   <body style="font-family: Arial, sans-serif; background-color: #f5f0ff; padding: 20px;">
     <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -79,23 +63,80 @@ The myPCOS Team
     </div>
   </body>
 </html>
-        """
+    """
+    return text, html
 
-        part1 = MIMEText(text, "plain")
-        part2 = MIMEText(html, "html")
-        message.attach(part1)
-        message.attach(part2)
 
-        # Send email. Gmail supports SSL on 465 and STARTTLS on 587.
-        if smtp_port == 465:
-            with smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=15) as server:
-                server.login(sender_email, sender_password)
-                server.sendmail(sender_email, email, message.as_string())
+def send_otp_via_resend(email: str, otp_code: str) -> None:
+    if not settings.resend_api_key:
+        raise RuntimeError("RESEND_API_KEY is not configured.")
+
+    if not settings.resend_from_email:
+        raise RuntimeError("RESEND_FROM_EMAIL is not configured.")
+
+    text, html = build_otp_email(email, otp_code)
+    payload: dict[str, Any] = {
+        "from": settings.resend_from_email,
+        "to": [email],
+        "subject": "Your myPCOS Verification Code",
+        "text": text.strip(),
+        "html": html,
+    }
+    if settings.resend_reply_to:
+        payload["reply_to"] = settings.resend_reply_to
+
+    response = httpx.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=15.0,
+    )
+    response.raise_for_status()
+
+
+def send_otp_via_smtp(email: str, otp_code: str) -> None:
+    sender_email = settings.smtp_email
+    sender_password = settings.smtp_password
+    smtp_server = settings.smtp_server
+    smtp_port = settings.smtp_port
+
+    text, html = build_otp_email(email, otp_code)
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Your myPCOS Verification Code"
+    message["From"] = sender_email
+    message["To"] = email
+
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+    message.attach(part1)
+    message.attach(part2)
+
+    if smtp_port == 465:
+        with smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=15) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, message.as_string())
+    else:
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, message.as_string())
+
+
+def send_otp_email(email: str, otp_code: str):
+    """Send OTP to user's email using the configured provider."""
+    try:
+        if settings.demo_otp_enabled:
+            print(f"DEMO OTP for {email}: {otp_code}")
+            return True
+
+        if settings.email_provider == "resend":
+            send_otp_via_resend(email, otp_code)
         else:
-            with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
-                server.starttls()
-                server.login(sender_email, sender_password)
-                server.sendmail(sender_email, email, message.as_string())
+            send_otp_via_smtp(email, otp_code)
 
         return True
     except Exception as e:
