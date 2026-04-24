@@ -141,7 +141,9 @@ function VerifyEmailContent() {
               )}
 
               <button
-                onClick={handleVerify}
+                onClick={() => {
+                  void handleVerify();
+                }}
                 disabled={isLoading || otp.length !== 5}
                 className="w-full rounded-xl bg-[linear-gradient(135deg,#8a3fd8,#cf41ca)] px-4 py-3 font-semibold text-white shadow-lg shadow-fuchsia-300/40 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
