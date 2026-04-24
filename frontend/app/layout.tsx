@@ -16,10 +16,32 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "myPCOS",
   description: "PCOS nutrition tracking and food detection web application.",
+  metadataBase: new URL("https://my-pcos-ai-app.vercel.app"),
   icons: {
     icon: "/mypcos-heart.svg",
     shortcut: "/mypcos-heart.svg",
     apple: "/mypcos-heart.svg",
+  },
+  openGraph: {
+    title: "myPCOS",
+    description: "PCOS nutrition tracking and food detection web application.",
+    url: "https://my-pcos-ai-app.vercel.app",
+    siteName: "myPCOS",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "myPCOS social preview",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "myPCOS",
+    description: "PCOS nutrition tracking and food detection web application.",
+    images: ["/opengraph-image"],
   },
 };
 
