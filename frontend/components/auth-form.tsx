@@ -106,7 +106,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                       onChange={(e) => setFirstName(e.target.value)}
                       required
                       type="text"
-                      placeholder="Jane"
+                      placeholder=""
                       className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                     />
                   </div>
@@ -118,7 +118,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
                       onChange={(e) => setLastName(e.target.value)}
                       required
                       type="text"
-                      placeholder="Doe"
+                      placeholder=""
                       className="w-full rounded-xl border border-[#e3cfdf] bg-white px-4 py-2.5 text-[#4f2550] focus:border-[#b678d4] focus:outline-none focus:ring-2 focus:ring-[#ead8fb]"
                     />
                   </div>
