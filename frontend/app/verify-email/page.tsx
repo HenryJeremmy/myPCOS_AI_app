@@ -26,17 +26,24 @@ function VerifyEmailContent() {
     }
   }, [resendCooldown]);
 
-  const handleVerify = async () => {
-    if (otp.length !== 5) {
+  const handleVerify = async (otpValue?: string) => {
+    if (isLoading) {
+      return;
+    }
+
+    const codeToVerify = otpValue ?? otp;
+
+    if (codeToVerify.length !== 5) {
       setError('Please enter the complete 5-digit code');
       return;
     }
 
     setError('');
+    setSuccessMessage('');
     setIsLoading(true);
 
     try {
-      await verifyEmail(email, otp);
+      await verifyEmail(email, codeToVerify);
       setSuccessMessage('Email verified! Redirecting to login...');
       setTimeout(() => {
         router.push('/login');
@@ -115,7 +122,9 @@ function VerifyEmailContent() {
                   length={5}
                   value={otp}
                   onChange={setOtp}
-                  onComplete={handleVerify}
+                  onComplete={(completedOtp) => {
+                    void handleVerify(completedOtp);
+                  }}
                 />
               </div>
 
