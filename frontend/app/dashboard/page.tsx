@@ -532,18 +532,18 @@ export default function DashboardPage() {
   const stats = [
     {
       label: "Meals logged",
-      value: dashboardData.mealsThisWeek.length,
-      note: "This week",
+      value: mealEntries.length,
+      note: `${dashboardData.mealsThisWeek.length} this week`,
     },
     {
       label: "Symptoms logged",
-      value: dashboardData.symptomsThisWeek.length,
-      note: "This week",
+      value: symptomEntries.length,
+      note: `${dashboardData.symptomsThisWeek.length} this week`,
     },
     {
       label: "Lifestyle entries",
-      value: dashboardData.lifestyleThisWeek.length,
-      note: "This week",
+      value: lifestyleEntries.length,
+      note: `${dashboardData.lifestyleThisWeek.length} this week`,
     },
     {
       label: "Insights found",
@@ -598,6 +598,10 @@ export default function DashboardPage() {
                     A clear overview of this week&apos;s logging activity,
                     consistency, and any repeated behavioural patterns worth
                     reviewing.
+                  </p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8d7391]">
+                    Summary cards show all-time totals, while charts and insights
+                    use records from the last 7 days.
                   </p>
                 </div>
               </div>
